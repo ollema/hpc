@@ -7,7 +7,7 @@ HPC_HOME      = /home/$(HPC_USER)
 # compiler settings
 CC            = gcc
 CFLAGS        = -Wall
-OPT_LEVEL     = 0 -g
+OPT_LEVEL     = 2
 
 # arb and flint settings
 # y or n
