@@ -11,6 +11,36 @@ int **roots;
 int **iters;
 char *done;
 
+// TODO: Therese
+void compute_line(int lines, int degree, int line)
+{
+    int *result_roots = (int *)malloc(sizeof(int) * lines);
+    int *result_iters = (int *)malloc(sizeof(int) * lines);
+
+    // compute roots and iterations for a line
+    // just doing a gradient for now
+    for (int i = 0; i < lines; i++)
+    {
+        result_roots[i] = i % 10;
+        result_iters[i] = (lines - i) % 20;
+    }
+
+    pthread_mutex_lock(&result_mutex);
+    roots[line] = result_roots;
+    iters[line] = result_iters;
+    pthread_mutex_unlock(&result_mutex);
+
+    pthread_mutex_lock(&done_mutex);
+    done[line] = 1;
+    pthread_mutex_unlock(&done_mutex);
+}
+
+void *compute_lines(void *restrict arg)
+{
+    // do something with the args here
+    return NULL;
+}
+
 int main(int argc, char **argv)
 {
     // parse arguments
@@ -88,15 +118,17 @@ int main(int argc, char **argv)
 
     // computation part below
     int ret;
-    size_t line, column, thread;
-    pthread_t threads[threads];
+    size_t line, thread;
+    pthread_t pthreads[threads];
 
     // create result matrices
     iters = (int **)malloc(lines * sizeof(int *));
     roots = (int **)malloc(lines * sizeof(int *));
     for (line = 0; line < lines; line++)
+    {
         iters[line] = (int *)malloc(lines * sizeof(int));
         roots[line] = (int *)malloc(lines * sizeof(int));
+    }
 
     // create threads
     pthread_mutex_init(&result_mutex, NULL);
@@ -106,7 +138,7 @@ int main(int argc, char **argv)
     {
         double **arg = malloc(2 * sizeof(double *));
         // create args here
-        if (ret = pthread_create(threads + thread, NULL, compute_lines, (void *)arg))
+        if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {
             printf("Error creating thread: %d\n", ret);
             exit(1);
@@ -116,7 +148,7 @@ int main(int argc, char **argv)
     // join threads
     for (thread = 0; thread < threads; thread++)
     {
-        if (ret = pthread_join(threads[thread], NULL))
+        if ((ret = pthread_join(pthreads[thread], NULL)))
         {
             printf("Error joining thread: %d\n", ret);
             exit(1);
@@ -127,32 +159,4 @@ int main(int argc, char **argv)
     pthread_mutex_destroy(&done_mutex);
 
     return 0;
-}
-
-void *compute_lines(void *restrict arg){
-    // do something with the args here
-}
-
-// TODO: Therese
-void *compute_line(int lines, int degree, int line)
-{
-    int *result_roots = (int *)malloc(sizeof(int) * lines);
-    int *result_iters = (int *)malloc(sizeof(int) * lines);
-
-    // compute roots and iterations for a line
-    // just doing a gradient for now
-    for (int i = 0; i < lines; i++)
-    {
-        result_roots[i] = i % 10;
-        result_iters[i] = (lines - i) % 20;
-    }
-
-    pthread_mutex_lock(&result_mutex);
-    roots[line] = result_roots;
-    iters[line] = result_iters;
-    pthread_mutex_unlock(&result_mutex);
-
-    pthread_mutex_lock(&done_mutex);
-    done[line] = 1;
-    pthread_mutex_unlock(&done_mutex);
 }
