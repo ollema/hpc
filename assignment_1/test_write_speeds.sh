@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-make clean; make OPT_LEVEL=2 writing_to_hdd; ./writing_to_hdd;
+make clean; make CFLAGS="-Wall -O2" writing_to_hdd; ./writing_to_hdd;
 
-make clean; make OPT_LEVEL=2 writing_to_ssd; ./writing_to_ssd;
+make clean; make CFLAGS="-Wall -O2" writing_to_ssd; ./writing_to_ssd;
 
 start_time="$(date -u +%s.%N)"
 for run in {1..10}

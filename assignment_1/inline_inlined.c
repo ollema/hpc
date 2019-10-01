@@ -21,8 +21,8 @@ int main()
 
     timespec_get(&initial_time, TIME_UTC);
     for (int i = 0; i < 30000; i++) {
-        *as_re = *bs_re * *cs_re - *bs_im * *cs_im;
-        *as_im = *bs_re * *cs_im + *bs_im * *cs_re;
+        as_re[i] = bs_re[i] * cs_re[i] - bs_im[i] * cs_im[i];
+        as_im[i] = bs_re[i] * cs_im[i] + bs_im[i] * cs_re[i];
     }
     timespec_get(&final_time, TIME_UTC);
 

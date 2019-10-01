@@ -48,10 +48,10 @@ int main()
         }
     }
 
-    const double **real_matrix = (const double**)matrix;
+    const double **const_matrix = (const double**)matrix;
 
     timespec_get(&initial_time, TIME_UTC);
-    row_sums(rsums, real_matrix, nrs, ncs);
+    row_sums(rsums, const_matrix, nrs, ncs);
     timespec_get(&final_time, TIME_UTC);
 
     delta_time_s = final_time.tv_sec - initial_time.tv_sec;
@@ -63,7 +63,7 @@ int main()
 
 
     timespec_get(&initial_time, TIME_UTC);
-    col_sums(csums, real_matrix, nrs, ncs);
+    col_sums(csums, const_matrix, nrs, ncs);
     timespec_get(&final_time, TIME_UTC);
 
     delta_time_s = final_time.tv_sec - initial_time.tv_sec;
