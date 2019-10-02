@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <unistd.h>
 
 int threads = -1, lines = -1, degree;
 
@@ -12,8 +13,14 @@ int **iters;
 char *done;
 
 // TODO: Therese
-void compute_line(int lines, int degree, int line)
+// TODO: Remove thread_number arg when we are done with development
+void compute_line(int line, int thread_number)
 {
+
+    // TODO: Remove when we are done
+    printf("thread %d computing line %d\n", thread_number + 1, line + 1);
+    sleep(1);
+
     int *result_roots = (int *)malloc(sizeof(int) * lines);
     int *result_iters = (int *)malloc(sizeof(int) * lines);
 
@@ -37,13 +44,25 @@ void compute_line(int lines, int degree, int line)
 
 void *compute_lines(void *restrict arg)
 {
-    // do something with the args here
+
+    int start_line = ((int *)arg)[0];
+    int end_line = ((int *)arg)[1];
+    int thread_number = ((int *)arg)[2];
+    free(arg);
+
+    for (int line = start_line; line < end_line; line++)
+    {
+        compute_line(line, thread_number);
+    }
+
     return NULL;
 }
 
 int main(int argc, char **argv)
 {
+    // ########################################################################
     // parse arguments
+    // ########################################################################
     extern char *optarg;
     extern int optind;
     int c, err = 0;
@@ -116,34 +135,42 @@ int main(int argc, char **argv)
     }
     // argument parsing done!
 
+    // ########################################################################
     // computation part below
-    int ret;
-    size_t line, thread;
+    // ########################################################################
+    int ret, line, thread, block_size, rest;
     pthread_t pthreads[threads];
+
+    block_size = lines / threads;
+    rest = lines % threads;
 
     // create result matrices
     iters = (int **)malloc(lines * sizeof(int *));
     roots = (int **)malloc(lines * sizeof(int *));
-    for (line = 0; line < lines; line++)
-    {
-        iters[line] = (int *)malloc(lines * sizeof(int));
-        roots[line] = (int *)malloc(lines * sizeof(int));
-    }
+    done = (char *)malloc(lines * sizeof(char));
 
     // create threads
     pthread_mutex_init(&result_mutex, NULL);
     pthread_mutex_init(&done_mutex, NULL);
 
-    for (thread = 0; thread < threads; thread++)
+    for (thread = 0, line = 0; thread < threads; thread++, line += block_size)
     {
-        double **arg = malloc(2 * sizeof(double *));
-        // create args here
+        int *arg = malloc(4 * sizeof(int));
+        arg[0] = line;
+        if ((thread == thread - 1) &&(rest !=0)) {
+            arg[1] = line + block_size + rest;
+        } else {
+            arg[1] = line + block_size;
+        }
+        arg[2] = thread;
         if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {
             printf("Error creating thread: %d\n", ret);
             exit(1);
         }
     }
+
+    // TODO: Create writer thread here
 
     // join threads
     for (thread = 0; thread < threads; thread++)
@@ -154,6 +181,8 @@ int main(int argc, char **argv)
             exit(1);
         }
     }
+
+    // TODO: Join writer thread here
 
     pthread_mutex_destroy(&result_mutex);
     pthread_mutex_destroy(&done_mutex);
