@@ -61,7 +61,7 @@ void *compute_lines(void *restrict arg)
 
 void *writer_function(){
      char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 190 030    255 025 080";
-     int somenumbers[] = {0,5,2,1};
+     int somenumbers[] = {0,1,2};
 
      int int_size = 20;
      double double_size = int_size;
@@ -80,8 +80,8 @@ void *writer_function(){
      fwrite("\n",1,1,fptr);
      
      char temp_char[13];
-     for (int i=0; i < 4; i++){
-       strncpy(temp_char, colors + somenumbers[i], 12);
+     for (int i=0; i < 3; i++){
+       strncpy(temp_char, colors + somenumbers[i]*12, 12);
        fwrite(temp_char, sizeof(char), 12, fptr);
      }
      pthread_exit( NULL );
