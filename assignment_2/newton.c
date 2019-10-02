@@ -17,12 +17,12 @@ char *done;
 void compute_line(int line, int thread_number)
 {
 
-    // TODO: Remove when we are done
+    // TODO: Remove when we are done with devlopment
     printf("thread %d computing line %d\n", thread_number + 1, line + 1);
     sleep(1);
 
-    int *result_roots = (int *)malloc(sizeof(int) * lines);
-    int *result_iters = (int *)malloc(sizeof(int) * lines);
+    int *result_roots = malloc(lines * sizeof result_roots);
+    int *result_iters = malloc(lines * sizeof result_iters);
 
     // compute roots and iterations for a line
     // just doing a gradient for now
@@ -106,11 +106,11 @@ int main(int argc, char **argv)
     if (optind < argc)
     {
         degree = atoi(argv[optind]);
-        printf("t:\t%d\nl:\t%d\nd:\t%d\n", threads, lines, degree);
+        printf("threads: %d\nlines:   %d\ndegree:  %d\n", threads, lines, degree);
 
         if (threads < 1 || threads > lines)
         {
-            printf("error: threads should be an integer between 1 to lines, or in other words 1 to %d!\n", lines);
+            printf("error: t should be an integer between 1 to lines, or in other words 1 to %d!\n", lines);
             fprintf(stderr, usage, argv[0]);
             exit(1);
         }
@@ -145,9 +145,9 @@ int main(int argc, char **argv)
     rest = lines % threads;
 
     // create result matrices
-    iters = (int **)malloc(lines * sizeof(int *));
-    roots = (int **)malloc(lines * sizeof(int *));
-    done = (char *)malloc(lines * sizeof(char));
+    iters = calloc(lines, sizeof iters);
+    roots = calloc(lines, sizeof roots);
+    done = malloc(lines * sizeof done);
 
     // create threads
     pthread_mutex_init(&result_mutex, NULL);
@@ -155,13 +155,16 @@ int main(int argc, char **argv)
 
     for (thread = 0, line = 0; thread < threads; thread++, line += block_size)
     {
-        int *arg = malloc(4 * sizeof(int));
+        int *arg = malloc(4 * sizeof arg);
         arg[0] = line;
-        if ((thread == thread - 1) &&(rest !=0)) {
+        if ((thread == threads - 1) &&(rest !=0)) {
+            // if lines is not divisible by threads, we assign the rest of the lines to the last thread. hopefully,
+            // this should not affect the performance too much, since the last lines should be easy to compute anyways
             arg[1] = line + block_size + rest;
         } else {
             arg[1] = line + block_size;
         }
+        // TODO: Remove this arg when done with development
         arg[2] = thread;
         if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {
@@ -186,6 +189,15 @@ int main(int argc, char **argv)
 
     pthread_mutex_destroy(&result_mutex);
     pthread_mutex_destroy(&done_mutex);
+
+    for (line = 0; line < lines; line++)
+    {
+        free(roots[line]);
+        free(iters[line]);
+    }
+    free(roots);
+    free(iters);
+    free(done);
 
     return 0;
 }
