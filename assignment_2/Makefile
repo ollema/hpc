@@ -6,7 +6,7 @@ HPC_HOME      = /home/$(HPC_USER)
 
 # compiler settings
 CC            = gcc
-CFLAGS        = -Wall
+CFLAGS        = -Wall -lm
 LIBS		  = -lpthread
 
 

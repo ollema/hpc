@@ -3,7 +3,8 @@
 #include <getopt.h>
 #include <pthread.h>
 #include <unistd.h>
-
+#include <string.h>
+#include <math.h>
 int threads = -1, lines = -1, degree;
 
 pthread_mutex_t result_mutex, done_mutex;
@@ -56,6 +57,34 @@ void *compute_lines(void *restrict arg)
     }
 
     return NULL;
+}
+
+void *writer_function(){
+     char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 190 030    255 025 080";
+     int somenumbers[] = {0,5,2,1};
+
+     int int_size = 20;
+     double double_size = int_size;
+     int size_char_array = log10(double_size) + 1;
+     char buffer[size_char_array];
+     sprintf(buffer, "%i",int_size);
+     
+     FILE *fptr;
+     fptr = fopen("image.ppm", "w");
+     char my_header[3] = "P3";
+     
+     fwrite(my_header, 1, 2, fptr);
+     fwrite("\n",1,1,fptr);
+     fwrite(buffer, 1, sizeof(buffer), fptr);
+     fwrite(" ",1,1,fptr); fwrite(buffer, 1, sizeof(buffer), fptr);
+     fwrite("\n",1,1,fptr);
+     
+     char temp_char[13];
+     for (int i=0; i < 4; i++){
+       strncpy(temp_char, colors + somenumbers[i], 12);
+       fwrite(temp_char, sizeof(char), 12, fptr);
+     }
+     pthread_exit( NULL );
 }
 
 int main(int argc, char **argv)
@@ -174,8 +203,16 @@ int main(int argc, char **argv)
     }
 
     // TODO: Create writer thread here
+    pthread_t writer_thread;
+    pthread_create(&writer_thread, NULL, writer_function, NULL);
+    
 
+    
+
+    
     // join threads
+    pthread_join(writer_thread, NULL);
+    
     for (thread = 0; thread < threads; thread++)
     {
         if ((ret = pthread_join(pthreads[thread], NULL)))
