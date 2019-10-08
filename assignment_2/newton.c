@@ -14,14 +14,8 @@ int **iters;
 char *done;
 
 // TODO: Therese
-// TODO: Remove thread_number arg when we are done with development
-void compute_line(int line, int thread_number)
+void compute_line(int line)
 {
-
-    // TODO: Remove when we are done with devlopment
-    printf("thread %d computing line %d\n", thread_number + 1, line + 1);
-    sleep(1);
-
     int *result_roots = malloc(lines * sizeof result_roots);
     int *result_iters = malloc(lines * sizeof result_iters);
 
@@ -30,7 +24,7 @@ void compute_line(int line, int thread_number)
     for (int i = 0; i < lines; i++)
     {
         result_roots[i] = i % 10;
-        result_iters[i] = (lines - i) % 20;
+        result_iters[i] = i % 55;
     }
 
     pthread_mutex_lock(&result_mutex);
@@ -48,12 +42,11 @@ void *compute_lines(void *restrict arg)
 
     int start_line = ((int *)arg)[0];
     int end_line = ((int *)arg)[1];
-    int thread_number = ((int *)arg)[2];
     free(arg);
 
     for (int line = start_line; line < end_line; line++)
     {
-        compute_line(line, thread_number);
+        compute_line(line);
     }
 
     return NULL;
@@ -61,31 +54,70 @@ void *compute_lines(void *restrict arg)
 
 void *writer_function()
 {
-    char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 190 030    255 025 080";
-    int somenumbers[] = {0, 1, 2};
-
-    int int_size = 20;
-    double double_size = int_size;
-    int size_char_array = log10(double_size) + 1;
-    char buffer[size_char_array];
-    sprintf(buffer, "%i", int_size);
-
-    FILE *fptr;
-    fptr = fopen("image.ppm", "w");
-    char my_header[3] = "P3";
-
-    fwrite(my_header, 1, 2, fptr);
-    fwrite("\n", 1, 1, fptr);
-    fwrite(buffer, 1, sizeof(buffer), fptr);
-    fwrite(" ", 1, 1, fptr);
-    fwrite(buffer, 1, sizeof(buffer), fptr);
-    fwrite("\n", 1, 1, fptr);
-
+    char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 \
+190 030 255 025 080 ";
     char temp_char[13];
-    for (int i = 0; i < 3; i++)
+    char iter_char[37];
+    double temp_lines = lines;
+    int size_char_array = log10(temp_lines) + 1;
+    char size_header[size_char_array];
+    FILE *fptr_roots;
+    FILE *fptr_iter;
+
+    // Initialize ppm by printing headers
+    sprintf(size_header, "%i", lines);
+    fptr_roots = fopen("roots.ppm", "w");
+    fptr_iter = fopen("iter.ppm", "w");
+    char ppm_header[3] = "P3";
+    fwrite(ppm_header, 1, 2, fptr_roots);
+    fwrite(ppm_header, 1, 2, fptr_iter);
+    fwrite("\n", 1, 1, fptr_roots);
+    fwrite("\n", 1, 1, fptr_iter);
+    fwrite(size_header, 1, sizeof(size_header), fptr_roots);
+    fwrite(size_header, 1, sizeof(size_header), fptr_iter);
+    fwrite(" ", 1, 1, fptr_roots);
+    fwrite(size_header, 1, sizeof(size_header), fptr_roots);
+    fwrite(" ", 1, 1, fptr_iter);
+    fwrite(size_header, 1, sizeof(size_header), fptr_iter);
+    fwrite("\n", 1, 1, fptr_roots);
+    fwrite("255", 1, 1, fptr_roots);
+    fwrite("\n", 1, 1, fptr_roots);
+    fwrite("\n", 1, 1, fptr_iter);
+    fwrite("55", 1, 2, fptr_iter);
+    fwrite("\n", 1, 1, fptr_iter);
+    struct timespec sleep_timespec = {0};
+    // Sleep time one microsecond
+    sleep_timespec.tv_nsec = 1 * 1000000;
+
+    for (size_t current_line = 0; current_line < lines;)
     {
-        strncpy(temp_char, colors + somenumbers[i] * 12, 12);
-        fwrite(temp_char, sizeof(char), 12, fptr);
+        pthread_mutex_lock(&done_mutex);
+        if (done[current_line] == 1)
+        {
+            int *local_roots = roots[current_line];
+            int *local_iter = iters[current_line];
+            for (size_t index = 0; index < lines; index++)
+            {
+                pthread_mutex_lock(&result_mutex);
+
+                strncpy(temp_char, colors + local_roots[index] * 12, 12);
+                fwrite(temp_char, sizeof(char), 12, fptr_roots);
+
+                sprintf(iter_char, "%i %i %i ", local_iter[index], local_iter[index], local_iter[index]);
+                fwrite(iter_char, sizeof(char), strlen(iter_char), fptr_iter);
+
+                pthread_mutex_unlock(&result_mutex);
+            }
+            fwrite("\n", 1, 1, fptr_roots);
+            fwrite("\n", 1, 1, fptr_iter);
+            current_line++;
+            pthread_mutex_unlock(&done_mutex);
+        }
+        else
+        {
+            pthread_mutex_unlock(&done_mutex);
+            nanosleep(&sleep_timespec, NULL);
+        }
     }
     pthread_exit(NULL);
 }
@@ -199,8 +231,7 @@ int main(int argc, char **argv)
         {
             arg[1] = line + block_size;
         }
-        // TODO: Remove this arg when done with development
-        arg[2] = thread;
+
         if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {
             printf("Error creating thread: %d\n", ret);
