@@ -211,7 +211,6 @@ int main(int argc, char **argv)
     pthread_t writer_thread;
     pthread_create(&writer_thread, NULL, writer_function, NULL);
 
-
     // join threads
     for (thread = 0; thread < threads; thread++)
     {
@@ -226,7 +225,6 @@ int main(int argc, char **argv)
 
     pthread_mutex_destroy(&result_mutex);
     pthread_mutex_destroy(&done_mutex);
-
 
     // free memory
     for (line = 0; line < lines; line++)
