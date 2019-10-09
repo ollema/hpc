@@ -20,12 +20,12 @@ void derivative_1(complex *z)
 
 void derivative_2(complex *z)
 {
-    *z = *z * 0.5  + 1.0 / (2.0 * *z);
+    *z = *z * 0.5 + 1.0 / (2.0 * *z);
 }
 
 void derivative_3(complex *z)
 {
-  *z = *z * (2.0/3) + 1.0 / (3 * *z * *z);
+    *z = *z * (2.0 / 3) + 1.0 / (3 * *z * *z);
 }
 
 void derivative_4(complex *z)
@@ -202,12 +202,12 @@ void compute_line(int line)
             }
             derivative(&z);
             if (attr != -1)
-	    {
+            {
                 break;
             }
-	}
-	result_roots[cx] = attr;
-	result_iters[cx] = fmin(conv, 55);
+        }
+        result_roots[cx] = attr;
+        result_iters[cx] = fmin(conv, 55);
     }
 
     pthread_mutex_lock(&result_mutex);
@@ -237,10 +237,21 @@ void *compute_lines(void *restrict arg)
 
 void *writer_function()
 {
-    // char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 190 030 255 025 080 ";
-    char colors[] = "0 0 8 0 8 0 8 0 0 1 1 5 1 5 1 5 1 1 2 2 2 3 2 2 2 3 2 3 2 2";
-    char root_chars[6 * lines];
-    char iter_chars[9 * lines];
+    char root_colors[] = "0 0 8 0 8 0 8 0 0 1 1 5 1 5 1 5 1 1 2 2 2 3 2 2 2 3 2 3 2 2";
+    char iter_colors[] = "00 00 00 01 01 01 02 02 02 03 03 03 04 04 04 05 05 05 06 06 06 07 07 07 08 08 08 09 09 09 \
+10 10 10 11 11 11 12 12 12 13 13 13 14 14 14 15 15 15 16 16 16 17 17 17 18 18 18 19 19 19 \
+20 20 20 21 21 21 22 22 22 23 23 23 24 24 24 25 25 25 26 26 26 27 27 27 28 28 28 29 29 29 \
+30 30 30 31 31 31 32 32 32 33 33 33 34 34 34 35 35 35 36 36 36 37 37 37 38 38 38 39 39 39 \
+40 40 40 41 41 41 42 42 42 43 43 43 44 44 44 45 45 45 46 46 46 47 47 47 48 48 48 49 49 49 \
+50 50 50 51 51 51 52 52 52 53 53 53 54 54 54 55 55 55 ";
+
+    char **root_pixels = malloc(lines * sizeof root_pixels);
+    for (int i = 0; i < lines; i++)
+        root_pixels[i] = malloc(6 * lines * sizeof(char));
+
+    char **iter_pixels = malloc(lines * sizeof iter_pixels);
+    for (int i = 0; i < lines; i++)
+        iter_pixels[i] = malloc(9 * lines * sizeof(char));
 
     FILE *fptr_roots;
     FILE *fptr_iters;
@@ -268,19 +279,14 @@ void *writer_function()
             int *local_iter = iters[current_line];
             pthread_mutex_unlock(&result_mutex);
 
-            int root_index = 0;
-            int iter_index = 0;
-
-            for (int column = 0; column < lines; column++)
+            for (int column = 0, root_index = 0, iter_index = 0; column < lines; column++, root_index += 6, iter_index +=9)
             {
-                memcpy(root_chars + root_index, colors + local_roots[column] * 6, 6);
-                root_index += 6;
-                iter_index += sprintf(iter_chars + iter_index, "%d %d %d  ", local_iter[column], local_iter[column], local_iter[column]);
-
+                memcpy(root_pixels[current_line] + root_index, root_colors + local_roots[column] * 6, 6);
+                memcpy(iter_pixels[current_line] + iter_index, iter_colors + local_iter[column] * 9, 9);
             }
 
-            fwrite(root_chars, sizeof(char), 6 * lines, fptr_roots);
-            fwrite(iter_chars, sizeof(char), strlen(iter_chars), fptr_iters);
+            fwrite(root_pixels[current_line], sizeof(char), 6 * lines, fptr_roots);
+            fwrite(iter_pixels[current_line], sizeof(char), 9 * lines, fptr_iters);
 
             fwrite("\n", 1, 1, fptr_roots);
             fwrite("\n", 1, 1, fptr_iters);
