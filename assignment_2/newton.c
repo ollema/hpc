@@ -205,15 +205,8 @@ void compute_line(int line)
 	    {
                 break;
             }
-        }
-	if (attr == 0)
-	  {
-	    result_roots[cx] = attr;
-	  }
-	else
-	  {
-	    result_roots[cx] = attr + 1;
-	  }
+	}
+	result_roots[cx] = attr;
 	result_iters[cx] = fmin(conv, 55);
     }
 
