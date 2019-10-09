@@ -106,7 +106,7 @@ void compute_line(int line)
         roots_h[0] = -1.0 + 0.0 * I;
         roots_h[1] = 1.0 + 0.0 * I;
         roots_h[2] = 0.0 - 1.0 * I;
-        roots_h[3] = 0.0 - 1 * I;
+        roots_h[3] = 0.0 + 1.0 * I;
         break;
     case 5:
         roots_h[0] = 1.0 + 0.0 * I;
