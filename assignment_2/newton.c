@@ -285,7 +285,7 @@ void *writer_function()
 
             for (int column = 0; column < lines; column++)
             {
-                strncpy(root_chars + root_index, colors + local_roots[column] * 6, 6);
+                memcpy(root_chars + root_index, colors + local_roots[column] * 6, 6);
                 root_index += 6;
                 iter_index += sprintf(iter_chars + iter_index, "%d %d %d  ", local_iter[column], local_iter[column], local_iter[column]);
 
