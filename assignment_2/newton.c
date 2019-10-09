@@ -10,6 +10,59 @@
 #define lower_bound 0.000001
 #define upper_bound 10000000000
 
+typedef void (*complex_function)(double complex *);
+complex_function derivative;
+
+void derivative_1(complex *z)
+{
+    *z = -1.0;
+}
+
+void derivative_2(complex *z)
+{
+    *z = *z * (1.0 / 2) + 1.0 / (2.0 * *z);
+}
+
+void derivative_3(complex *z)
+{
+    *z = *z * (2.0 / 3) + 1.0 / (3 * *z * *z);
+}
+
+void derivative_4(complex *z)
+{
+    *z = *z * (3.0 / 4) + 1.0 / (4 * *z * *z * *z);
+}
+
+void derivative_5(complex *z)
+{
+    *z = *z * (4.0 / 5) + 1.0 / (5 * *z * *z * *z * *z);
+}
+
+void derivative_6(complex *z)
+{
+    *z = *z * (5.0 / 6) + 1.0 / (6 * *z * *z * *z * *z * *z);
+}
+
+void derivative_7(complex *z)
+{
+    *z = *z * (6.0 / 7) + 1.0 / (7 * *z * *z * *z * *z * *z * *z);
+}
+
+void derivative_8(complex *z)
+{
+    *z = *z * (7.0 / 8) + 1.0 / (8 * *z * *z * *z * *z * *z * *z * *z);
+}
+
+void derivative_9(complex *z)
+{
+    *z = *z * (8.0 / 9) + 1.0 / (9 * *z * *z * *z * *z * *z * *z * *z * *z);
+}
+
+void derivative_10(complex *z)
+{
+    *z = *z * (9.0 / 10) + 1.0 / (10 * *z * *z * *z * *z * *z * *z * *z * *z * *z);
+}
+
 int threads = -1, lines = -1, degree;
 
 pthread_mutex_t result_mutex, done_mutex;
@@ -24,13 +77,16 @@ void compute_line(int line)
     double complex roots_h[degree];
     int *result_roots = malloc(lines * sizeof(int));
     int *result_iters = malloc(lines * sizeof(int));
+
     double complex z;
     double old_im_z = 2.0 - (4.0 * line / lines);
-    double distance;
-    size_t conv;
-    size_t attr;
     double sq_abs_z;
-    size_t cx = 0;
+
+    double distance;
+    int conv;
+    int attr;
+
+    int cx = 0;
 
     switch (degree)
     {
@@ -126,7 +182,7 @@ void compute_line(int line)
                 attr = 0;
                 break;
             }
-            // if z sqaured is close to origin, assume it will diverge
+            // if z squared is close to origin, assume it will diverge
             if (sq_abs_z < lower_bound)
             {
                 attr = 0;
@@ -141,46 +197,10 @@ void compute_line(int line)
                 if (distance < lower_bound)
                 {
                     attr = ix + 1;
-                    // printf("attr: %d\n", attr);
                     break;
                 }
             }
-            switch (degree)
-            {
-            case 1:
-                z = -1.0;
-                break;
-            case 2:
-                z = z * (1.0 / 2) + 1.0 / (2.0 * z);
-                break;
-            case 3:
-                z = z * (2.0 / 3) + 1.0 / (3 * z * z);
-                break;
-            case 4:
-                z = z * (3.0 / 4) + 1.0 / (4 * z * z * z);
-                break;
-            case 5:
-                z = z * (4.0 / 5) + 1.0 / (5 * z * z * z * z);
-                break;
-            case 6:
-                z = z * (5.0 / 6) + 1.0 / (6 * z * z * z * z * z);
-                break;
-            case 7:
-                z = z * (6.0 / 7) + 1.0 / (7 * z * z * z * z * z * z);
-                break;
-            case 8:
-                z = z * (7.0 / 8) + 1.0 / (8 * z * z * z * z * z * z * z);
-                break;
-            case 9:
-                z = z * (8.0 / 9) + 1.0 / (9 * z * z * z * z * z * z * z * z);
-                break;
-            case 10:
-                z = z * (9.0 / 10) + 1.0 / (10 * z * z * z * z * z * z * z * z * z);
-                break;
-            default:
-                fprintf(stderr, "unexpected degree\n");
-                exit(1);
-            }
+            derivative(&z);
             if (attr == 0)
             {
                 result_roots[cx] = attr;
@@ -195,6 +215,10 @@ void compute_line(int line)
             {
                 break;
             }
+            if (conv > 54) {
+                result_iters[cx] = 55;
+                break;
+            }
         }
     }
 
@@ -206,39 +230,17 @@ void compute_line(int line)
     pthread_mutex_lock(&done_mutex);
     done[line] = 1;
     pthread_mutex_unlock(&done_mutex);
-    // printf("roots[0]: %d\n", roots[line][0]);
 }
-
-// int *result_roots = malloc(lines * sizeof result_roots);
-// int *result_iters = malloc(lines * sizeof result_iters);
-
-// compute roots and iterations for a line
-// just doing a gradient for now
-// for (int i = 0; i < lines; i++)
-// {
-//     result_roots[i] = i % 10;
-//     result_iters[i] = i % 55;
-// }
-
-// pthread_mutex_lock(&result_mutex);
-// roots[line] = result_roots;
-// iters[line] = result_iters;
-// pthread_mutex_unlock(&result_mutex);
-
-// pthread_mutex_lock(&done_mutex);
-// done[line] = 1;
-// pthread_mutex_unlock(&done_mutex);
-// }
 
 void *compute_lines(void *restrict arg)
 {
-
     int start_line = ((int *)arg)[0];
-    int end_line = ((int *)arg)[1];
+    int offset = ((int *)arg)[1];
     free(arg);
 
-    for (int line = start_line; line < end_line; line++)
+    for (int line = start_line; line < lines; line += offset)
     {
+        // printf("thread %d computing line %d\n", start_line, line);
         compute_line(line);
     }
 
@@ -247,64 +249,54 @@ void *compute_lines(void *restrict arg)
 
 void *writer_function()
 {
-    char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 \
-190 030 255 025 080 ";
-    char temp_char[13];
-    char iter_char[37];
-    double temp_lines = lines;
-    int size_char_array = log10(temp_lines) + 1;
-    char size_header[size_char_array];
-    FILE *fptr_roots;
-    FILE *fptr_iter;
+    // char colors[] = "000 000 255 000 255 000 255 000 000 100 100 100 020 020 020 120 000 120 000 020 160 255 080 020 080 190 030 255 025 080 ";
+    char colors[] = "0 0 8 0 8 0 8 0 0 1 1 5 1 5 1 5 1 1 2 2 2 3 2 2 2 3 2 3 2 2";
+    char root_chars[6 * lines];
+    char iter_chars[9 * lines];
 
-    // Initialize ppm by printing headers
-    sprintf(size_header, "%i", lines);
+    FILE *fptr_roots;
+    FILE *fptr_iters;
+
+    // initialize ppm by printing headers
     fptr_roots = fopen("roots.ppm", "w");
-    fptr_iter = fopen("iter.ppm", "w");
-    char ppm_header[3] = "P3";
-    fwrite(ppm_header, 1, 2, fptr_roots);
-    fwrite(ppm_header, 1, 2, fptr_iter);
-    fwrite("\n", 1, 1, fptr_roots);
-    fwrite("\n", 1, 1, fptr_iter);
-    fwrite(size_header, 1, sizeof(size_header), fptr_roots);
-    fwrite(size_header, 1, sizeof(size_header), fptr_iter);
-    fwrite(" ", 1, 1, fptr_roots);
-    fwrite(size_header, 1, sizeof(size_header), fptr_roots);
-    fwrite(" ", 1, 1, fptr_iter);
-    fwrite(size_header, 1, sizeof(size_header), fptr_iter);
-    fwrite("\n", 1, 1, fptr_roots);
-    fwrite("255", 1, 1, fptr_roots);
-    fwrite("\n", 1, 1, fptr_roots);
-    fwrite("\n", 1, 1, fptr_iter);
-    fwrite("55", 1, 2, fptr_iter);
-    fwrite("\n", 1, 1, fptr_iter);
+    fptr_iters = fopen("iters.ppm", "w");
+    fprintf(fptr_roots, "P3\n%d %d\n8\n", lines, lines);
+    fprintf(fptr_iters, "P3\n%d %d\n55\n", lines, lines);
+
     struct timespec sleep_timespec = {0};
-    // Sleep time one microsecond
+
+    // sleep time one microsecond
     sleep_timespec.tv_nsec = 1 * 1000000;
 
-    for (size_t current_line = 0; current_line < lines;)
+    for (int current_line = 0; current_line < lines;)
     {
         pthread_mutex_lock(&done_mutex);
         if (done[current_line] == 1)
         {
+            pthread_mutex_unlock(&done_mutex);
+
+            pthread_mutex_lock(&result_mutex);
             int *local_roots = roots[current_line];
             int *local_iter = iters[current_line];
-            for (size_t index = 0; index < lines; index++)
+            pthread_mutex_unlock(&result_mutex);
+
+            int root_index = 0;
+            int iter_index = 0;
+
+            for (int column = 0; column < lines; column++)
             {
-                pthread_mutex_lock(&result_mutex);
+                strncpy(root_chars + root_index, colors + local_roots[column] * 6, 6);
+                root_index += 6;
+                iter_index += sprintf(iter_chars + iter_index, "%d %d %d  ", local_iter[column], local_iter[column], local_iter[column]);
 
-                strncpy(temp_char, colors + local_roots[index] * 12, 12);
-                fwrite(temp_char, sizeof(char), 12, fptr_roots);
-
-                sprintf(iter_char, "%i %i %i ", local_iter[index], local_iter[index], local_iter[index]);
-                fwrite(iter_char, sizeof(char), strlen(iter_char), fptr_iter);
-
-                pthread_mutex_unlock(&result_mutex);
             }
+
+            fwrite(root_chars, sizeof(char), 6 * lines, fptr_roots);
+            fwrite(iter_chars, sizeof(char), strlen(iter_chars), fptr_iters);
+
             fwrite("\n", 1, 1, fptr_roots);
-            fwrite("\n", 1, 1, fptr_iter);
+            fwrite("\n", 1, 1, fptr_iters);
             current_line++;
-            pthread_mutex_unlock(&done_mutex);
         }
         else
         {
@@ -395,11 +387,45 @@ int main(int argc, char **argv)
     // ########################################################################
     // computation part below
     // ########################################################################
-    int ret, line, thread, block_size, rest;
+    switch (degree)
+    {
+    case 1:
+        derivative = derivative_1;
+        break;
+    case 2:
+        derivative = derivative_2;
+        break;
+    case 3:
+        derivative = derivative_3;
+        break;
+    case 4:
+        derivative = derivative_4;
+        break;
+    case 5:
+        derivative = derivative_5;
+        break;
+    case 6:
+        derivative = derivative_6;
+        break;
+    case 7:
+        derivative = derivative_7;
+        break;
+    case 8:
+        derivative = derivative_8;
+        break;
+    case 9:
+        derivative = derivative_9;
+        break;
+    case 10:
+        derivative = derivative_10;
+        break;
+    }
+
+    int ret, line, thread, offset;
     pthread_t pthreads[threads];
 
-    block_size = lines / threads;
-    rest = lines % threads;
+    // offset = lines / threads;
+    offset = threads;
 
     // create result matrices
     iters = calloc(lines, sizeof iters);
@@ -410,20 +436,11 @@ int main(int argc, char **argv)
     pthread_mutex_init(&result_mutex, NULL);
     pthread_mutex_init(&done_mutex, NULL);
 
-    for (thread = 0, line = 0; thread < threads; thread++, line += block_size)
+    for (thread = 0, line = 0; thread < threads; thread++)
     {
         int *arg = malloc(4 * sizeof arg);
-        arg[0] = line;
-        if ((thread == threads - 1) && (rest != 0))
-        {
-            // if lines is not divisible by threads, we assign the rest of the lines to the last thread. hopefully,
-            // this should not affect the performance too much, since the last lines should be easy to compute anyways
-            arg[1] = line + block_size + rest;
-        }
-        else
-        {
-            arg[1] = line + block_size;
-        }
+        arg[0] = thread;
+        arg[1] = offset;
 
         if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {

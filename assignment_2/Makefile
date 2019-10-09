@@ -6,8 +6,8 @@ HPC_HOME      = /home/$(HPC_USER)
 
 # compiler settings
 CC            = gcc
-CFLAGS        = -Wall -lm
-LIBS		  = -lpthread
+CFLAGS        = -Wall -O2
+LIBS		  = -lpthread -lm
 
 
 # objects
@@ -20,7 +20,7 @@ OBJS=newton
 all: clean $(OBJS)
 
 newton: newton.c
-	$(CC) -o $@ $(CFLAGS) -O0 -g $(LIBS) $<
+	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
 
 
 # helpers
