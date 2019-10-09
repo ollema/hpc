@@ -20,12 +20,12 @@ void derivative_1(complex *z)
 
 void derivative_2(complex *z)
 {
-    *z = *z * (1.0 / 2) + 1.0 / (2.0 * *z);
+    *z = *z * 0.5  + 1.0 / (2.0 * *z);
 }
 
 void derivative_3(complex *z)
 {
-    *z = *z * (2.0 / 3) + 1.0 / (3 * *z * *z);
+  *z = *z * (2.0/3) + 1.0 / (3 * *z * *z);
 }
 
 void derivative_4(complex *z)
@@ -83,8 +83,8 @@ void compute_line(int line)
     double sq_abs_z;
 
     double distance;
-    int conv;
-    int attr;
+    short int conv;
+    short int attr;
 
     int cx = 0;
 
@@ -201,25 +201,20 @@ void compute_line(int line)
                 }
             }
             derivative(&z);
-            if (attr == 0)
-            {
-                result_roots[cx] = attr;
-            }
-            else
-            {
-                result_roots[cx] = attr + 1;
-            }
-            result_iters[cx] = fmin(conv, 55);
-
             if (attr != -1)
-            {
-                break;
-            }
-            if (conv > 54) {
-                result_iters[cx] = 55;
+	    {
                 break;
             }
         }
+	if (attr == 0)
+	  {
+	    result_roots[cx] = attr;
+	  }
+	else
+	  {
+	    result_roots[cx] = attr + 1;
+	  }
+	result_iters[cx] = fmin(conv, 55);
     }
 
     pthread_mutex_lock(&result_mutex);
