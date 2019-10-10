@@ -22,6 +22,8 @@ all: clean $(OBJS)
 newton: newton.c
 	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
 
+submission: newton.c
+	tar czf submit.tar.gz newton.c
 
 # helpers
 clean:
