@@ -10,68 +10,74 @@
 #define lower_bound 0.000001
 #define upper_bound 10000000000
 
-typedef void (*complex_function)(double complex *);
-complex_function derivative;
+// arguments
+int threads = -1, lines = -1, degree;
 
-void derivative_1(complex *z)
+// mutices
+pthread_mutex_t result_mutex, done_mutex;
+
+// iteration functions for each degree
+typedef void (*complex_function)(double complex *);
+complex_function iterate;
+
+void iterate_1(complex *z)
 {
-    *z = -1.0;
+    *z = 1.0;
 }
 
-void derivative_2(complex *z)
+void iterate_2(complex *z)
 {
     *z = *z * 0.5 + 1.0 / (2.0 * *z);
 }
 
-void derivative_3(complex *z)
+void iterate_3(complex *z)
 {
     *z = *z * (2.0 / 3) + 1.0 / (3 * *z * *z);
 }
 
-void derivative_4(complex *z)
+void iterate_4(complex *z)
 {
     *z = *z * (3.0 / 4) + 1.0 / (4 * *z * *z * *z);
 }
 
-void derivative_5(complex *z)
+void iterate_5(complex *z)
 {
     *z = *z * (4.0 / 5) + 1.0 / (5 * *z * *z * *z * *z);
 }
 
-void derivative_6(complex *z)
+void iterate_6(complex *z)
 {
     *z = *z * (5.0 / 6) + 1.0 / (6 * *z * *z * *z * *z * *z);
 }
 
-void derivative_7(complex *z)
+void iterate_7(complex *z)
 {
     *z = *z * (6.0 / 7) + 1.0 / (7 * *z * *z * *z * *z * *z * *z);
 }
 
-void derivative_8(complex *z)
+void iterate_8(complex *z)
 {
     *z = *z * (7.0 / 8) + 1.0 / (8 * *z * *z * *z * *z * *z * *z * *z);
 }
 
-void derivative_9(complex *z)
+void iterate_9(complex *z)
 {
     *z = *z * (8.0 / 9) + 1.0 / (9 * *z * *z * *z * *z * *z * *z * *z * *z);
 }
 
-void derivative_10(complex *z)
+void iterate_10(complex *z)
 {
     *z = *z * (9.0 / 10) + 1.0 / (10 * *z * *z * *z * *z * *z * *z * *z * *z * *z);
 }
 
-int threads = -1, lines = -1, degree;
+// known roots for each degree
+double complex *roots_h;
 
-pthread_mutex_t result_mutex, done_mutex;
-
+// result matrices
 int **roots;
 int **iters;
 char *done;
 
-// TODO: Therese
 void compute_line(int line)
 {
     double complex roots_h[degree];
@@ -87,88 +93,6 @@ void compute_line(int line)
     short int attr;
 
     int cx = 0;
-
-    switch (degree)
-    {
-    case 1:
-        roots_h[0] = 1.0 + 0.0 * I;
-        break;
-    case 2:
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -1.0 + 0.0 * I;
-        break;
-    case 3:
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.5 - 0.86603 * I;
-        roots_h[2] = -0.5 + 0.86603 * I;
-        break;
-    case 4:
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = 0.0 - 1.0 * I;
-        roots_h[3] = 0.0 + 1.0 * I;
-        break;
-    case 5:
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.80902 - 0.58779 * I;
-        roots_h[2] = 0.30902 + 0.95106 * I;
-        roots_h[3] = 0.30902 - 0.95106 * I;
-        roots_h[4] = -0.80902 + 0.58779 * I;
-        break;
-    case 6:
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = -0.5 - 0.86603 * I;
-        roots_h[3] = 0.5 + 0.86603 * I;
-        roots_h[4] = 0.5 - 0.86603 * I;
-        roots_h[5] = -0.5 + 0.86603 * I;
-        break;
-    case 7:
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.90097 - 0.43388 * I;
-        roots_h[2] = 0.62349 + 0.78183 * I;
-        roots_h[3] = -0.22252 - 0.97493 * I;
-        roots_h[4] = -0.22252 + 0.97493 * I;
-        roots_h[5] = 0.62349 - 0.78183 * I;
-        roots_h[6] = -0.90097 + 0.43388 * I;
-        break;
-    case 8:
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = 0.0 - 1.0 * I;
-        roots_h[3] = 0.0 + 1.0 * I;
-        roots_h[4] = -0.70711 - 70711 * I;
-        roots_h[5] = 0.70711 + 0.70711 * I;
-        roots_h[6] = 0.70711 - 0.70711 * I;
-        roots_h[7] = -0.70711 + 0.70711 * I;
-        break;
-    case 9:
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.93969 - 0.34202 * I;
-        roots_h[2] = 0.76604 + 0.64279 * I;
-        roots_h[3] = -0.5 - 0.86603 * I;
-        roots_h[4] = 0.17365 + 0.98481 * I;
-        roots_h[5] = 0.17365 - 0.98481 * I;
-        roots_h[6] = 0.5 + 0.86603 * I;
-        roots_h[7] = 0.76604 - 0.64279 * I;
-        roots_h[8] = -0.93969 + 0.34202 * I;
-        break;
-    case 10:
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = -0.80902 - 0.58779 * I;
-        roots_h[3] = 0.80902 + 0.58779 * I;
-        roots_h[4] = -0.30902 - 0.95106 * I;
-        roots_h[5] = 0.30902 + 0.95106 * I;
-        roots_h[6] = 0.30902 - 0.95106 * I;
-        roots_h[7] = -0.30902 + 0.95106 * I;
-        roots_h[8] = 0.80902 - 0.58779 * I;
-        roots_h[9] = -0.80902 + 0.58779 * I;
-        break;
-    default:
-        fprintf(stderr, "unexpected degree\n");
-        exit(1);
-    }
 
     for (double re_z = -2.0; cx < lines; ++cx, re_z += (4.0 / lines))
     {
@@ -200,7 +124,7 @@ void compute_line(int line)
                     break;
                 }
             }
-            derivative(&z);
+            iterate(&z);
             if (attr != -1)
             {
                 break;
@@ -228,7 +152,6 @@ void *compute_lines(void *restrict arg)
 
     for (int line = start_line; line < lines; line += offset)
     {
-        // printf("thread %d computing line %d\n", start_line, line);
         compute_line(line);
     }
 
@@ -265,7 +188,7 @@ void *writer_function()
     struct timespec sleep_timespec = {0};
 
     // sleep time one microsecond
-    sleep_timespec.tv_nsec = 1 * 1000000;
+    sleep_timespec.tv_nsec = 1 * 100000;
 
     for (int current_line = 0; current_line < lines;)
     {
@@ -349,7 +272,7 @@ int main(int argc, char **argv)
     if (optind < argc)
     {
         degree = atoi(argv[optind]);
-        printf("threads: %d\nlines:   %d\ndegree:  %d\n", threads, lines, degree);
+        // printf("threads: %d\nlines:   %d\ndegree:  %d\n", threads, lines, degree);
 
         if (threads < 1 || threads > lines)
         {
@@ -381,45 +304,99 @@ int main(int argc, char **argv)
     // ########################################################################
     // computation part below
     // ########################################################################
+    roots_h = malloc(degree * sizeof(double complex));
+
     switch (degree)
     {
     case 1:
-        derivative = derivative_1;
+        iterate = iterate_1;
+        roots_h[0] = 1.0 + 0.0 * I;
         break;
     case 2:
-        derivative = derivative_2;
+        iterate = iterate_2;
+        roots_h[0] = 1.0 + 0.0 * I;
+        roots_h[1] = -1.0 + 0.0 * I;
         break;
     case 3:
-        derivative = derivative_3;
+        iterate = iterate_3;
+        roots_h[0] = 1.0 + 0.0 * I;
+        roots_h[1] = -0.5 - 0.86603 * I;
+        roots_h[2] = -0.5 + 0.86603 * I;
         break;
     case 4:
-        derivative = derivative_4;
+        iterate = iterate_4;
+        roots_h[0] = -1.0 + 0.0 * I;
+        roots_h[1] = 1.0 + 0.0 * I;
+        roots_h[2] = 0.0 - 1.0 * I;
+        roots_h[3] = 0.0 + 1.0 * I;
         break;
     case 5:
-        derivative = derivative_5;
+        iterate = iterate_5;
+        roots_h[0] = 1.0 + 0.0 * I;
+        roots_h[1] = -0.80902 - 0.58779 * I;
+        roots_h[2] = 0.30902 + 0.95106 * I;
+        roots_h[3] = 0.30902 - 0.95106 * I;
+        roots_h[4] = -0.80902 + 0.58779 * I;
         break;
     case 6:
-        derivative = derivative_6;
+        iterate = iterate_6;
+        roots_h[0] = -1.0 + 0.0 * I;
+        roots_h[1] = 1.0 + 0.0 * I;
+        roots_h[2] = -0.5 - 0.86603 * I;
+        roots_h[3] = 0.5 + 0.86603 * I;
+        roots_h[4] = 0.5 - 0.86603 * I;
+        roots_h[5] = -0.5 + 0.86603 * I;
         break;
     case 7:
-        derivative = derivative_7;
+        iterate = iterate_7;
+        roots_h[0] = 1.0 + 0.0 * I;
+        roots_h[1] = -0.90097 - 0.43388 * I;
+        roots_h[2] = 0.62349 + 0.78183 * I;
+        roots_h[3] = -0.22252 - 0.97493 * I;
+        roots_h[4] = -0.22252 + 0.97493 * I;
+        roots_h[5] = 0.62349 - 0.78183 * I;
+        roots_h[6] = -0.90097 + 0.43388 * I;
         break;
     case 8:
-        derivative = derivative_8;
+        iterate = iterate_8;
+        roots_h[0] = -1.0 + 0.0 * I;
+        roots_h[1] = 1.0 + 0.0 * I;
+        roots_h[2] = 0.0 - 1.0 * I;
+        roots_h[3] = 0.0 + 1.0 * I;
+        roots_h[4] = -0.70711 - 70711 * I;
+        roots_h[5] = 0.70711 + 0.70711 * I;
+        roots_h[6] = 0.70711 - 0.70711 * I;
+        roots_h[7] = -0.70711 + 0.70711 * I;
         break;
     case 9:
-        derivative = derivative_9;
+        iterate = iterate_9;
+        roots_h[0] = 1.0 + 0.0 * I;
+        roots_h[1] = -0.93969 - 0.34202 * I;
+        roots_h[2] = 0.76604 + 0.64279 * I;
+        roots_h[3] = -0.5 - 0.86603 * I;
+        roots_h[4] = 0.17365 + 0.98481 * I;
+        roots_h[5] = 0.17365 - 0.98481 * I;
+        roots_h[6] = 0.5 + 0.86603 * I;
+        roots_h[7] = 0.76604 - 0.64279 * I;
+        roots_h[8] = -0.93969 + 0.34202 * I;
         break;
     case 10:
-        derivative = derivative_10;
+        iterate = iterate_10;
+        roots_h[0] = -1.0 + 0.0 * I;
+        roots_h[1] = 1.0 + 0.0 * I;
+        roots_h[2] = -0.80902 - 0.58779 * I;
+        roots_h[3] = 0.80902 + 0.58779 * I;
+        roots_h[4] = -0.30902 - 0.95106 * I;
+        roots_h[5] = 0.30902 + 0.95106 * I;
+        roots_h[6] = 0.30902 - 0.95106 * I;
+        roots_h[7] = -0.30902 + 0.95106 * I;
+        roots_h[8] = 0.80902 - 0.58779 * I;
+        roots_h[9] = -0.80902 + 0.58779 * I;
         break;
     }
 
-    int ret, line, thread, offset;
+    int ret, thread;
     pthread_t pthreads[threads];
-
-    // offset = lines / threads;
-    offset = threads;
 
     // create result matrices
     iters = calloc(lines, sizeof iters);
@@ -430,11 +407,11 @@ int main(int argc, char **argv)
     pthread_mutex_init(&result_mutex, NULL);
     pthread_mutex_init(&done_mutex, NULL);
 
-    for (thread = 0, line = 0; thread < threads; thread++)
+    for (thread = 0; thread < threads; thread++)
     {
         int *arg = malloc(4 * sizeof arg);
         arg[0] = thread;
-        arg[1] = offset;
+        arg[1] = threads;
 
         if ((ret = pthread_create(pthreads + thread, NULL, compute_lines, (void *)arg)))
         {
@@ -462,7 +439,8 @@ int main(int argc, char **argv)
     pthread_mutex_destroy(&done_mutex);
 
     // free memory
-    for (line = 0; line < lines; line++)
+    free(roots_h);
+    for (int line = 0; line < lines; line++)
     {
         free(roots[line]);
         free(iters[line]);

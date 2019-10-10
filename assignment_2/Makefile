@@ -23,7 +23,12 @@ newton: newton.c
 	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
 
 submission: newton.c
-	tar czf submit.tar.gz newton.c
+	@ rm submit.tar.gz
+	tar czf submit.tar.gz newton.c Makefile
+
+test: submission
+	/home/hpc2019/a2_grading/check_submission.py submit.tar.gz
+
 
 # helpers
 clean:
