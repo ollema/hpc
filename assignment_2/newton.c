@@ -71,7 +71,7 @@ void iterate_10(complex *z)
 }
 
 // known roots for each degree
-double complex *roots_h;
+double complex *known_roots;
 
 // result matrices
 int **roots;
@@ -80,7 +80,6 @@ char *done;
 
 void compute_line(int line)
 {
-    double complex roots_h[degree];
     int *result_roots = malloc(lines * sizeof(int));
     int *result_iters = malloc(lines * sizeof(int));
 
@@ -114,10 +113,10 @@ void compute_line(int line)
             }
             for (size_t ix = 0; ix < degree; ++ix)
             {
-                distance = (creal(roots_h[ix]) - creal(z)) *
-                               (creal(roots_h[ix]) - creal(z)) +
-                           (cimag(roots_h[ix]) - cimag(z)) *
-                               (cimag(roots_h[ix]) - cimag(z));
+                distance = (creal(known_roots[ix]) - creal(z)) *
+                               (creal(known_roots[ix]) - creal(z)) +
+                           (cimag(known_roots[ix]) - cimag(z)) *
+                               (cimag(known_roots[ix]) - cimag(z));
                 if (distance < lower_bound)
                 {
                     attr = ix + 1;
@@ -180,8 +179,12 @@ void *writer_function()
     FILE *fptr_iters;
 
     // initialize ppm by printing headers
-    fptr_roots = fopen("roots.ppm", "w");
-    fptr_iters = fopen("iters.ppm", "w");
+    char filenamn_roots[26];
+    char filenamn_iters[27];
+    snprintf(filenamn_roots, sizeof(char) * 26, "newton_attractors_x%d.ppm", degree);
+    snprintf(filenamn_iters, sizeof(char) * 27, "newton_convergence_x%d.ppm", degree);
+    fptr_roots = fopen(filenamn_roots, "w");
+    fptr_iters = fopen(filenamn_iters, "w");
     fprintf(fptr_roots, "P3\n%d %d\n8\n", lines, lines);
     fprintf(fptr_iters, "P3\n%d %d\n55\n", lines, lines);
 
@@ -221,6 +224,18 @@ void *writer_function()
             nanosleep(&sleep_timespec, NULL);
         }
     }
+
+    for (int line = 0; line < lines; line++)
+    {
+        free(root_pixels[line]);
+        free(iter_pixels[line]);
+    }
+    free(root_pixels);
+    free(iter_pixels);
+
+    fclose(fptr_roots);
+    fclose(fptr_iters);
+
     pthread_exit(NULL);
 }
 
@@ -304,94 +319,94 @@ int main(int argc, char **argv)
     // ########################################################################
     // computation part below
     // ########################################################################
-    roots_h = malloc(degree * sizeof(double complex));
+    known_roots = malloc(degree * sizeof(double complex));
 
     switch (degree)
     {
     case 1:
         iterate = iterate_1;
-        roots_h[0] = 1.0 + 0.0 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
         break;
     case 2:
         iterate = iterate_2;
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -1.0 + 0.0 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
+        known_roots[1] = -1.0 + 0.0 * I;
         break;
     case 3:
         iterate = iterate_3;
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.5 - 0.86603 * I;
-        roots_h[2] = -0.5 + 0.86603 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
+        known_roots[1] = -0.5 - 0.86603 * I;
+        known_roots[2] = -0.5 + 0.86603 * I;
         break;
     case 4:
         iterate = iterate_4;
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = 0.0 - 1.0 * I;
-        roots_h[3] = 0.0 + 1.0 * I;
+        known_roots[0] = -1.0 + 0.0 * I;
+        known_roots[1] = 1.0 + 0.0 * I;
+        known_roots[2] = 0.0 - 1.0 * I;
+        known_roots[3] = 0.0 + 1.0 * I;
         break;
     case 5:
         iterate = iterate_5;
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.80902 - 0.58779 * I;
-        roots_h[2] = 0.30902 + 0.95106 * I;
-        roots_h[3] = 0.30902 - 0.95106 * I;
-        roots_h[4] = -0.80902 + 0.58779 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
+        known_roots[1] = -0.80902 - 0.58779 * I;
+        known_roots[2] = 0.30902 + 0.95106 * I;
+        known_roots[3] = 0.30902 - 0.95106 * I;
+        known_roots[4] = -0.80902 + 0.58779 * I;
         break;
     case 6:
         iterate = iterate_6;
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = -0.5 - 0.86603 * I;
-        roots_h[3] = 0.5 + 0.86603 * I;
-        roots_h[4] = 0.5 - 0.86603 * I;
-        roots_h[5] = -0.5 + 0.86603 * I;
+        known_roots[0] = -1.0 + 0.0 * I;
+        known_roots[1] = 1.0 + 0.0 * I;
+        known_roots[2] = -0.5 - 0.86603 * I;
+        known_roots[3] = 0.5 + 0.86603 * I;
+        known_roots[4] = 0.5 - 0.86603 * I;
+        known_roots[5] = -0.5 + 0.86603 * I;
         break;
     case 7:
         iterate = iterate_7;
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.90097 - 0.43388 * I;
-        roots_h[2] = 0.62349 + 0.78183 * I;
-        roots_h[3] = -0.22252 - 0.97493 * I;
-        roots_h[4] = -0.22252 + 0.97493 * I;
-        roots_h[5] = 0.62349 - 0.78183 * I;
-        roots_h[6] = -0.90097 + 0.43388 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
+        known_roots[1] = -0.90097 - 0.43388 * I;
+        known_roots[2] = 0.62349 + 0.78183 * I;
+        known_roots[3] = -0.22252 - 0.97493 * I;
+        known_roots[4] = -0.22252 + 0.97493 * I;
+        known_roots[5] = 0.62349 - 0.78183 * I;
+        known_roots[6] = -0.90097 + 0.43388 * I;
         break;
     case 8:
         iterate = iterate_8;
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = 0.0 - 1.0 * I;
-        roots_h[3] = 0.0 + 1.0 * I;
-        roots_h[4] = -0.70711 - 70711 * I;
-        roots_h[5] = 0.70711 + 0.70711 * I;
-        roots_h[6] = 0.70711 - 0.70711 * I;
-        roots_h[7] = -0.70711 + 0.70711 * I;
+        known_roots[0] = -1.0 + 0.0 * I;
+        known_roots[1] = 1.0 + 0.0 * I;
+        known_roots[2] = 0.0 - 1.0 * I;
+        known_roots[3] = 0.0 + 1.0 * I;
+        known_roots[4] = -0.70711 - 70711 * I;
+        known_roots[5] = 0.70711 + 0.70711 * I;
+        known_roots[6] = 0.70711 - 0.70711 * I;
+        known_roots[7] = -0.70711 + 0.70711 * I;
         break;
     case 9:
         iterate = iterate_9;
-        roots_h[0] = 1.0 + 0.0 * I;
-        roots_h[1] = -0.93969 - 0.34202 * I;
-        roots_h[2] = 0.76604 + 0.64279 * I;
-        roots_h[3] = -0.5 - 0.86603 * I;
-        roots_h[4] = 0.17365 + 0.98481 * I;
-        roots_h[5] = 0.17365 - 0.98481 * I;
-        roots_h[6] = 0.5 + 0.86603 * I;
-        roots_h[7] = 0.76604 - 0.64279 * I;
-        roots_h[8] = -0.93969 + 0.34202 * I;
+        known_roots[0] = 1.0 + 0.0 * I;
+        known_roots[1] = -0.93969 - 0.34202 * I;
+        known_roots[2] = 0.76604 + 0.64279 * I;
+        known_roots[3] = -0.5 - 0.86603 * I;
+        known_roots[4] = 0.17365 + 0.98481 * I;
+        known_roots[5] = 0.17365 - 0.98481 * I;
+        known_roots[6] = 0.5 + 0.86603 * I;
+        known_roots[7] = 0.76604 - 0.64279 * I;
+        known_roots[8] = -0.93969 + 0.34202 * I;
         break;
     case 10:
         iterate = iterate_10;
-        roots_h[0] = -1.0 + 0.0 * I;
-        roots_h[1] = 1.0 + 0.0 * I;
-        roots_h[2] = -0.80902 - 0.58779 * I;
-        roots_h[3] = 0.80902 + 0.58779 * I;
-        roots_h[4] = -0.30902 - 0.95106 * I;
-        roots_h[5] = 0.30902 + 0.95106 * I;
-        roots_h[6] = 0.30902 - 0.95106 * I;
-        roots_h[7] = -0.30902 + 0.95106 * I;
-        roots_h[8] = 0.80902 - 0.58779 * I;
-        roots_h[9] = -0.80902 + 0.58779 * I;
+        known_roots[0] = -1.0 + 0.0 * I;
+        known_roots[1] = 1.0 + 0.0 * I;
+        known_roots[2] = -0.80902 - 0.58779 * I;
+        known_roots[3] = 0.80902 + 0.58779 * I;
+        known_roots[4] = -0.30902 - 0.95106 * I;
+        known_roots[5] = 0.30902 + 0.95106 * I;
+        known_roots[6] = 0.30902 - 0.95106 * I;
+        known_roots[7] = -0.30902 + 0.95106 * I;
+        known_roots[8] = 0.80902 - 0.58779 * I;
+        known_roots[9] = -0.80902 + 0.58779 * I;
         break;
     }
 
@@ -401,7 +416,7 @@ int main(int argc, char **argv)
     // create result matrices
     iters = calloc(lines, sizeof iters);
     roots = calloc(lines, sizeof roots);
-    done = malloc(lines * sizeof done);
+    done = calloc(lines,  sizeof done);
 
     // create threads
     pthread_mutex_init(&result_mutex, NULL);
@@ -439,7 +454,7 @@ int main(int argc, char **argv)
     pthread_mutex_destroy(&done_mutex);
 
     // free memory
-    free(roots_h);
+    free(known_roots);
     for (int line = 0; line < lines; line++)
     {
         free(roots[line]);
