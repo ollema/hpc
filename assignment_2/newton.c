@@ -205,7 +205,7 @@ void *writer_function()
             int *local_iter = iters[current_line];
             pthread_mutex_unlock(&result_mutex);
 
-            for (int column = 0, root_index = 0, iter_index = 0; column < lines; column++, root_index += 6, iter_index +=9)
+            for (int column = 0, root_index = 0, iter_index = 0; column < lines; column++, root_index += 6, iter_index += 9)
             {
                 memcpy(root_pixels[current_line] + root_index, root_colors + local_roots[column] * 6, 6);
                 memcpy(iter_pixels[current_line] + iter_index, iter_colors + local_iter[column] * 9, 9);
@@ -416,7 +416,7 @@ int main(int argc, char **argv)
     // create result matrices
     iters = calloc(lines, sizeof iters);
     roots = calloc(lines, sizeof roots);
-    done = calloc(lines,  sizeof done);
+    done = calloc(lines, sizeof done);
 
     // create threads
     pthread_mutex_init(&result_mutex, NULL);
