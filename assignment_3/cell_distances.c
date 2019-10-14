@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <math.h>
-#include <complex.h>
 
 // arguments
 int threads = -1;
