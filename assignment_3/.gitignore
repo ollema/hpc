@@ -1,8 +1,2 @@
-image.ppm
-iter.ppm
-iters.ppm
-roots.ppm
-newton
+cell_distances
 submit.tar.gz
-newton_attractors_x*.ppm
-newton_convergence_x*.ppm
