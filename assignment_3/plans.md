@@ -10,9 +10,9 @@
 - **Synchronization**.  Or the lack thereof. We want to avoid explicit synchronization if possible.
 
 - **Memory management**.  We will want to load as much of the input data into the memory as possible without breaking 
-   the constraits given in the assignment. This to further minimize the read/write operations needed.
+   the constraints given in the assignment. This to further minimize the read/write operations needed.
 
-- **Data types**.  We will need to pay close attention to what data types we choose to limit memroy usage and increase 
+- **Data types**.  We will need to pay close attention to what data types we choose to limit memory usage and increase 
    performance in calculations.
 
 ***CONTINUE HERE WITH FUTHER CONCEPTS***
