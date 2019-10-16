@@ -28,8 +28,7 @@ We visualize all the possible combinations of coordinates to compute the distanc
 
 4. **Calculate distances**
 With some coordinates read into memory, we can then compute the distances between these. We will parallize this part using OpenMP. We compute the distance using the square root of the difference in each sub-coordinate.
-
 All the distances are then saved to an array with the maximum length being equal to the maxium distance possible * 100. This means that we can save the frequencies of the distances in sort of a hash map which is very fast.
 
-4. **Print the result**
+5. **Print the result**
 Finally, we just have to loop through the array and print the results. The array is already sorted, per design. And we dont have to convert anything to floats, we should just be able printf them into the correct format. We will see!
