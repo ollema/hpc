@@ -1,11 +1,33 @@
-## Implementation plan
+## Relevant concepts
 
-- **Planning phase**: Discuss and plan the assignment. How will we divide the work load? What are the major challanges for this problem?
+- **I/O bottlenecks**.  We have learned in previous assignments that writing and reading from files can be slow and 
+  one wants to limit the number of read/writes to a file.
+  
+- **Data type conversion**.  Conversion from string to int can be costly and one has to choose the most effcient method here.
+  
+- **Multithreading**.  In this case, we will achieve this using OpenMP.
 
-- **Define the program layout and interfaces**: We will have a number of different modules in this program. How will they communicate with each other?
+- **Synchronization**.  Or the lack thereof. We want to avoid explicit synchronization if possible.
 
-- **Mathematical survey of the problem**: Evaluate all roots for the task-specific polynomials as well as the derrivatives.
+- **Memory management**.  We will want to load as much of the input data into the memory as possible without breaking 
+   the constraits given in the assignment. This to further minimize the read/write operations needed.
 
-- **Implement the sub modubles**:
+- **Data types**.  We will need to pay close attention to what data types we choose to limit memroy usage and increase 
+   performance in calculations.
 
-- **Benchmarking**:
+***CONTINUE HERE WITH FUTHER CONCEPTS***
+
+## Intended program layout
+
+Per instructions the program naturally splits into two subtasks: The
+computation of the Newton iteration and the writing of results to the two
+output files. Each of them will be implemented in a separate function, that are
+intended to be run as the main function of corresponding POSIX threads.
+
+The computation of the Newton iteration can be further split up into
+***INSERT***
+
+As for the writing to file, we have identified ***INSERT*** independent
+subtasks. ***INSERT***
+
+***CONTINUE BY FURTHER SPLITTING UP THE TWO TASKS***
