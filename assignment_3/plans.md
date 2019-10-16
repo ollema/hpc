@@ -27,8 +27,9 @@ We will only load a certain number of coordinates into the memory at any given t
 We visualize all the possible combinations of coordinates to compute the distance between in a matrix. We only need to compute one half of this matrix and we choose to compute the upper half above the diagonal (not including the diagonal). We then take a block of coordinates on the x axis and a block of coordinates on the y axis of this matrix and read those into memory from the file. We read the coordinates from string and save them as integers, by skipping to read the dot. In effect, they become multiplied by 100 so we will have to keep this in mind for future calculations when we want to present the results.
 
 4. **Calculate distances**
-With some coordinates read into memory, we can then compute the distances between these. We will parallize this part using OpenMP. We compute the distance using the sqaure root of the 
+With some coordinates read into memory, we can then compute the distances between these. We will parallize this part using OpenMP. We compute the distance using the square root of the difference in each sub-coordinate.
 
-1. 
+All the distances are then saved to an array with the maximum length being equal to the maxium distance possible * 100. This means that we can save the frequencies of the distances in sort of a hash map which is very fast.
 
-1. ****
+4. **Print the result**
+Finally, we just have to loop through the array and print the results. The array is already sorted, per design. And we dont have to convert anything to floats, we should just be able printf them into the correct format. We will see!
