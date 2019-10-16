@@ -7,7 +7,7 @@ HPC_HOME      = /home/$(HPC_USER)
 # compiler settings
 CC            = gcc
 CFLAGS        = -Wall -O2 -march=native -pipe
-LIBS		  =
+LIBS		  = -lm
 
 
 # objects

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <math.h>
 
 // arguments
 int threads = -1;
@@ -10,7 +11,7 @@ int block_size;
 int *coords_1;
 int *coords_2;
 
-int distances[34642];
+int *distances;
 
 int raw_coord_to_int(const char *p)
 {
@@ -43,7 +44,20 @@ int raw_coord_to_int(const char *p)
 
 void compute_distance(int i, int j, int k, int l)
 {
-    distances[9999 + k + l] += 1;
+    int global_position_row = i + k;
+    int global_position_column = j + l;
+    if (global_position_row < global_position_column)
+    {
+        // Calculate distances
+        int diff_1 = coords_1[3 * l] - coords_2[3 * k];
+        int diff_2 = coords_1[3 * l + 1] - coords_2[3 * k + 1];
+        int diff_3 = coords_1[3 * l + 2] - coords_2[3 * k + 2];
+
+        float temp = sqrt(diff_1 * diff_1 + diff_2 * diff_2 + diff_3 * diff_3);
+        int distance = round(temp/10);
+
+        distances[distance] += 1;
+    }
 }
 
 int main(int argc, char **argv)
@@ -96,8 +110,8 @@ int main(int argc, char **argv)
     char ch;
     FILE *input_file;
 
-    // input_file = fopen("/home/hpc2019/a3_grading/test_data/cell_50", "r");
-    input_file = fopen("/home/hpcuser004/assignment_3/test_input", "r");
+    input_file = fopen("/home/hpc2019/a3_grading/test_data/cell_e4", "r");
+    // input_file = fopen("/home/hpcuser004/assignment_3/test_input", "r");
 
     while (!feof(input_file))
     {
@@ -109,7 +123,7 @@ int main(int argc, char **argv)
     }
 
     // TODO: increase
-    block_size = 5;
+    block_size = 10000;
 
     char *raw_coords_1 = malloc(sizeof raw_coords_1 * block_size * 24);
     char *raw_coords_2 = malloc(sizeof raw_coords_2 * block_size * 24);
@@ -119,6 +133,8 @@ int main(int argc, char **argv)
     int i = 0, j = 0;
     int k = 0, l = 0;
     int coord;
+
+    distances = calloc(34642, sizeof distances);
 
     for (i = 0; i < number_of_coords; i += block_size)
     {
@@ -141,31 +157,6 @@ int main(int argc, char **argv)
                 coords_2[coord + 2] = raw_coord_to_int(raw_coords_2 + 16 + 8 * coord);
             }
 
-            // if (i == 0 && j == 5)
-            // {
-            //     for (k = 0; k < block_size; k++)
-            //     {
-            //         for (l = 0; l < 3; l++)
-            //         {
-            //             printf("%d ", coords_1[k * 3 + l]);
-            //         }
-            //         printf("\n");
-            //     }
-
-            //     printf("\n");
-
-            //     for (k = 0; k < block_size; k++)
-            //     {
-            //         for (l = 0; l < 3; l++)
-            //         {
-            //             printf("%d ", coords_2[k * 3 + l]);
-            //         }
-            //         printf("\n");
-            //     }
-
-            //     exit(0);
-            // }
-
             for (k = 0; k < block_size; k++)
             {
                 for (l = 0; l < block_size; l++)
@@ -183,13 +174,11 @@ int main(int argc, char **argv)
     for (int i = 0; i < 34642; i++)
     {
         distance = distances[i];
-
         if (distance != 0)
         {
-            number = i / 1000;
+            number = i / 100;
             rest = i % 100;
-            // printf("%d: %d\n", i, distance);
-            printf("%02d.%02d: %d\n", number, rest, distance);
+            printf("%02d.%02d %d\n", number, rest, distance);
         }
     }
 }
