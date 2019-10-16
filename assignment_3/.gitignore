@@ -2,3 +2,6 @@ cell_distances
 submit.tar.gz
 .vscode/
 test_input
+perf.data
+perf.data.old
+output
