@@ -15,7 +15,7 @@
 - **Data types**.  We will need to pay close attention to what data types we choose to limit memory usage and increase 
    performance in calculations.
 
-***CONTINUE HERE WITH FUTHER CONCEPTS***
+***CONTINUE HERE WITH FURTHER CONCEPTS***
 
 ## Intended program layout
 
