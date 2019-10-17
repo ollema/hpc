@@ -51,7 +51,7 @@ void compute_distance(int i, int j, int k, int l)
     int diff_3 = coords_1[3 * l + 2] - coords_2[3 * k + 2];
 
     float temp = sqrt(diff_1 * diff_1 + diff_2 * diff_2 + diff_3 * diff_3);
-    int distance = round(temp * 0.1);
+    int distance = (int) ((temp * 0.1) + 0.5);
 
     distances[distance] += 1;
 }
