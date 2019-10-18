@@ -9,14 +9,14 @@ int threads = -1;
 int number_of_coords = 0;
 int block_size;
 
-int *coords_1;
-int *coords_2;
+short *coords_1;
+short *coords_2;
 
 int *distances;
 
 int raw_coord_to_int(const char *p)
 {
-    int x = 0;
+    short x = 0;
     char negative = 0;
 
     if (*p == '-')
@@ -43,16 +43,20 @@ int raw_coord_to_int(const char *p)
     return x;
 }
 
-void compute_distance(int i, int j, int k, int l)
+static inline
+void compute_distance(int k, int l)
 {
     // Calculate distances
-    int diff_1 = coords_1[3 * l] - coords_2[3 * k];
-    int diff_2 = coords_1[3 * l + 1] - coords_2[3 * k + 1];
-    int diff_3 = coords_1[3 * l + 2] - coords_2[3 * k + 2];
+    int index1 = 3*l;
+    int index2 = 3*k;
 
-    float temp = sqrt(diff_1 * diff_1 + diff_2 * diff_2 + diff_3 * diff_3);
+    int diff_1 = coords_1[index1] - coords_2[index2];
+    int diff_2 = coords_1[index1 + 1] - coords_2[index2 + 1];
+    int diff_3 = coords_1[index1 + 2] - coords_2[index2 + 2];
+
+    float temp = sqrtf(diff_1 * diff_1 + diff_2 * diff_2 + diff_3 * diff_3);
     int distance = (int) ((temp * 0.1) + 0.5);
-
+   
     distances[distance] += 1;
 }
 
@@ -128,10 +132,10 @@ int main(int argc, char **argv)
     // TODO: increase
     block_size = 10000;
 
-    char *raw_coords_1 = malloc(sizeof raw_coords_1 * block_size * 24);
-    char *raw_coords_2 = malloc(sizeof raw_coords_2 * block_size * 24);
-    coords_1 = malloc(sizeof coords_1 * block_size * 3);
-    coords_2 = malloc(sizeof coords_1 * block_size * 3);
+    char *raw_coords_1 = malloc(sizeof(char) * block_size * 24);
+    char *raw_coords_2 = malloc(sizeof(char) * block_size * 24);
+    coords_1 = malloc(sizeof(short) * block_size * 3);
+    coords_2 = malloc(sizeof(short) * block_size * 3);
 
     int i = 0, j = 0;
     int k = 0, l = 0;
@@ -176,7 +180,7 @@ int main(int argc, char **argv)
                     int global_position_column = j + l;
                     if (global_position_row < global_position_column)
                     {
-                        compute_distance(i, j, k, l);
+                        compute_distance(k, l);
                     }
                 }
             }
