@@ -9,37 +9,21 @@ int threads = -1;
 int number_of_coords = 0;
 int block_size;
 
-short *coords_1;
-short *coords_2;
+short **coords_1;
+short **coords_2;
 
-int *distances;
+short *distances;
 
-int raw_coord_to_int(const char *p)
+short raw_coord_to_int(const char *p)
 {
-    short x = 0;
-    char negative = 0;
+    short x;
+    x = (p[1] - '0') * 10000 + (p[2] - '0') * 1000 + (p[4] - '0') * 100 + (p[5] - '0') * 10 + (p[6] - '0');
 
     if (*p == '-')
     {
-        negative = 1;
+        return -x;
     }
-    p++;
 
-    x += (*p - '0') * 10000;
-    p++;
-    x += (*p - '0') * 1000;
-    p += 2;
-    x += (*p - '0') * 100;
-    p++;
-    x += (*p - '0') * 10;
-    p++;
-    x += (*p - '0') * 1;
-    p++;
-
-    if (negative)
-    {
-        x = -x;
-    }
     return x;
 }
 
@@ -47,16 +31,13 @@ static inline
 void compute_distance(int k, int l)
 {
     // Calculate distances
-    int index1 = 3*l;
-    int index2 = 3*k;
-
-    int diff_1 = coords_1[index1] - coords_2[index2];
-    int diff_2 = coords_1[index1 + 1] - coords_2[index2 + 1];
-    int diff_3 = coords_1[index1 + 2] - coords_2[index2 + 2];
+    int diff_1 = coords_1[l][0] - coords_2[k][0];
+    int diff_2 = coords_1[l][1] - coords_2[k][1];
+    int diff_3 = coords_1[l][2] - coords_2[k][2];
 
     float temp = sqrtf(diff_1 * diff_1 + diff_2 * diff_2 + diff_3 * diff_3);
-    int distance = (int) ((temp * 0.1) + 0.5);
-   
+    short distance = (short) ((temp * 0.1) + 0.5);
+
     distances[distance] += 1;
 }
 
@@ -65,13 +46,6 @@ int main(int argc, char **argv)
     // ########################################################################
     // parse arguments
     // ########################################################################
-    struct timespec initial_time, final_time;
-    int delta_time_s;
-    long double delta_time_ns;
-    long double delta_time;
-
-    timespec_get(&initial_time, TIME_UTC);
-
     extern char *optarg;
     extern int optind;
     int c, err = 0;
@@ -134,14 +108,26 @@ int main(int argc, char **argv)
 
     char *raw_coords_1 = malloc(sizeof(char) * block_size * 24);
     char *raw_coords_2 = malloc(sizeof(char) * block_size * 24);
-    coords_1 = malloc(sizeof(short) * block_size * 3);
-    coords_2 = malloc(sizeof(short) * block_size * 3);
 
+    // coords_1 = malloc(sizeof(short) * block_size * 3);
+    // coords_2 = malloc(sizeof(short) * block_size * 3);
+
+    short *coords_1_entries = malloc(sizeof(short) * block_size * 3);
+    coords_1 = malloc(sizeof(short*) * block_size);
+    for ( size_t i = 0, j = 0; i < block_size; ++i, j+=3)
+        coords_1[i] = coords_1_entries + j;
+
+    short *coords_2_entries = malloc(sizeof(short) * block_size * 3);
+    coords_2 = malloc(sizeof(short*) * block_size);
+    for ( size_t i = 0, j = 0; i < block_size; ++i, j+=3)
+        coords_2[i] = coords_2_entries + j;
+
+    distances = calloc(34642, sizeof(short));
+
+    // should be size_t
     int i = 0, j = 0;
     int k = 0, l = 0;
     int coord;
-
-    distances = calloc(34642, sizeof distances);
 
     for (i = 0; i < number_of_coords; i += block_size)
     {
@@ -153,24 +139,16 @@ int main(int argc, char **argv)
             fseek(input_file, j * 24, SEEK_SET);
             fread(raw_coords_2, sizeof(char), 24 * block_size, input_file);
 
-            for (coord = 0; coord < block_size * 3; coord += 3)
+            for (coord = 0; coord < block_size; coord++)
             {
-                coords_1[coord] = raw_coord_to_int(raw_coords_1 + 8 * coord);
-                coords_1[coord + 1] = raw_coord_to_int(raw_coords_1 + 8 + 8 * coord);
-                coords_1[coord + 2] = raw_coord_to_int(raw_coords_1 + 16 + 8 * coord);
+                coords_1[coord][0] = raw_coord_to_int(raw_coords_1 + 8 * coord);
+                coords_1[coord][1] = raw_coord_to_int(raw_coords_1 + 8 + 8 * coord);
+                coords_1[coord][2] = raw_coord_to_int(raw_coords_1 + 16 + 8 * coord);
 
-                coords_2[coord] = raw_coord_to_int(raw_coords_2 + 8 * coord);
-                coords_2[coord + 1] = raw_coord_to_int(raw_coords_2 + 8 + 8 * coord);
-                coords_2[coord + 2] = raw_coord_to_int(raw_coords_2 + 16 + 8 * coord);
+                coords_2[coord][0] = raw_coord_to_int(raw_coords_2 + 8 * coord);
+                coords_2[coord][1] = raw_coord_to_int(raw_coords_2 + 8 + 8 * coord);
+                coords_2[coord][2] = raw_coord_to_int(raw_coords_2 + 16 + 8 * coord);
             }
-
-            timespec_get(&final_time, TIME_UTC);
-
-            delta_time_s = final_time.tv_sec - initial_time.tv_sec;
-            delta_time_ns = final_time.tv_nsec - initial_time.tv_nsec;
-
-            delta_time = delta_time_s + delta_time_ns / 1000000000;
-            printf("Pre time elapsed: \t\t\t%.9Lfs\n", delta_time);
 
             for (k = 0; k < block_size; k++)
             {
@@ -184,14 +162,6 @@ int main(int argc, char **argv)
                     }
                 }
             }
-
-            timespec_get(&final_time, TIME_UTC);
-
-            delta_time_s = final_time.tv_sec - initial_time.tv_sec;
-            delta_time_ns = final_time.tv_nsec - initial_time.tv_nsec;
-
-            delta_time = delta_time_s + delta_time_ns / 1000000000;
-            printf("After time elapsed: \t\t\t%.9Lfs\n", delta_time);
         }
     }
 
@@ -206,7 +176,7 @@ int main(int argc, char **argv)
         {
             number = i / 100;
             rest = i % 100;
-            // printf("%02d.%02d %d\n", number, rest, distance);
+            printf("%02d.%02d %d\n", number, rest, distance);
         }
     }
 }
