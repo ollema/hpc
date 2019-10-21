@@ -6,3 +6,4 @@ newton
 submit.tar.gz
 newton_attractors_x*.ppm
 newton_convergence_x*.ppm
+perf.data.old
