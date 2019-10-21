@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
     FILE *input_file;
 
-    // input_file = fopen("/home/hpc2019/a3_grading/test_data/cell_e5", "r");
+    // input_file = fopen("/home/hpc2019/a3_grading/test_data/cell_e4", "r");
     // input_file = fopen("/home/hpcuser004/assignment_3/test_input", "r");
     input_file = fopen("cells", "r");
 
@@ -91,7 +91,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // TODO: increase
     block_size = 10000;
 
     char *raw_coords_1 = malloc(sizeof(char) * block_size * 24);
@@ -103,7 +102,7 @@ int main(int argc, char **argv)
     int k = 0, l = 0;
     int coord;
 
-    distances = calloc(34642, sizeof distances);
+    distances = calloc(3465, sizeof distances);
 
     for (i = 0; i < number_of_coords; i += block_size)
     {
@@ -127,7 +126,7 @@ int main(int argc, char **argv)
             }
 
             {
-                #pragma omp parallel for shared(coords_1, coords_2) reduction(+:distances[:34642])
+                #pragma omp parallel for shared(coords_1, coords_2) reduction(+:distances[:3465])
                 for (k = 0; k < block_size; k++)
                 {
                     if (i == j)
@@ -173,7 +172,7 @@ int main(int argc, char **argv)
     int number;
     int rest;
 
-    for (int i = 0; i < 34642; i++)
+    for (int i = 0; i < 3465; i++)
     {
         distance = distances[i];
         if (distance != 0)
