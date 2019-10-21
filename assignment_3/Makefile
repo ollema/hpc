@@ -6,12 +6,12 @@ HPC_HOME      = /home/$(HPC_USER)
 
 # compiler settings
 CC            = gcc
-CFLAGS        = -Wall -O2 -march=native -pipe
-LIBS		  = -lm
+CFLAGS        = -Wall -Ofast -march=native -pipe
+LIBS		  = -lm -lgomp
 
 
 # objects
-OBJS=cell_distances
+OBJS=cell_distances cell_distances.o
 
 
 ###################################################################################################
@@ -19,8 +19,11 @@ OBJS=cell_distances
 ###################################################################################################
 all: clean $(OBJS)
 
-cell_distances: cell_distances.c
-	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
+cell_distances: cell_distances.o
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+
+cell_distances.o: cell_distances.c
+	$(CC) $(CFLAGS) -fopenmp -c $<
 
 submission: clean cell_distances
 	tar czf submit.tar.gz cell_distances.c Makefile
