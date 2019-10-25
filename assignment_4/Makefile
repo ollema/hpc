@@ -7,8 +7,7 @@ HPC_HOME      = /home/$(HPC_USER)
 # compiler settings
 CC            = gcc
 CFLAGS        = -Wall -Ofast -march=native -pipe
-LIBS		  = -lm
-
+LIBS		  = -lm -l OpenCL
 
 # objects
 OBJS=heat_diffusion
