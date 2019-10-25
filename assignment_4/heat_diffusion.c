@@ -6,6 +6,10 @@
 // arguments
 int iterations = -1;
 float diff_const = -1;
+int width;
+int heigth;
+
+double **temperatures;
 
 
 int main(int argc, char **argv)
@@ -71,5 +75,14 @@ int main(int argc, char **argv)
     // computation part below
     // ########################################################################
 
-    printf("iterations: %d\ndiff_const: %f\n\n", iterations, diff_const);
+    double * temperature_entries = malloc(sizeof(double) * width * heigth);
+    temperatures = malloc(sizeof(double*) * width); // or heigth?
+    for ( size_t i = 0, j = 0; i < width; ++i, j+=heigth )
+        temperatures[i] = temperature_entries + j;
+
+    // Same for both
+    for ( size_t i = 0; i < width; ++i )
+        for ( size_t j = 0; j < heigth; ++j )
+            temperatures[i][j] = 0.0;
+
 }
