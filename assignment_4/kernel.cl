@@ -22,7 +22,7 @@ __kernel void heat_diff(__global double *cur_temps, __global double *new_temps, 
         p1 = cur_temps[i - 1];
     }
 
-    if(i % (width - 1) == 0)
+    if((i + 1) % width == 0)
     {
         p2 = 0;
     } else {
@@ -42,8 +42,6 @@ __kernel void heat_diff(__global double *cur_temps, __global double *new_temps, 
     } else {
         p4 = cur_temps[i + width];
     }
-
-    // new_temps[i] = 1;
 
     new_temps[i] = diff_const * ((p1 + p2 + p3 + p4) / 4 - cur_temps[i]) + cur_temps[i];
 }

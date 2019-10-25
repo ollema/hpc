@@ -80,9 +80,13 @@ int main(int argc, char **argv)
     // ########################################################################
     FILE *input_file;
 
-    input_file = fopen("test_input", "r");
+    sleep(10000);
+
+    // input_file = fopen("test_input", "r");
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
+    // /home/hpcuser004/assignment_4/extracted/submit/diffusion
+    input_file = fopen("extracted/submit/diffusion", "r");
 
     char char_line[40];
     char *char_token;
@@ -116,16 +120,6 @@ int main(int argc, char **argv)
         current_temperatures[index_1 * width + index_2] = initial_value;
     }
 
-    for (size_t i = 0; i < height; i++)
-    {
-        for (size_t j = 0; j < width; j++)
-        {
-            printf("%f\t", current_temperatures[i * width + j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-
     // ########################################################################
     // computation part below
     // ########################################################################
@@ -158,15 +152,10 @@ int main(int argc, char **argv)
     // Create a command queue
     cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 
-    // TODO: maybe loop here?
-
     // Create memory buffers on the device for each vector
-    cl_mem cur_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY, array_length * sizeof(double), NULL, &ret);
-    cl_mem new_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY, array_length * sizeof(double), NULL, &ret);
-
-    // Copy the lists A and B to their respective memory buffers
-    // TODO: maybe write/copy new to curr every iteration except the first?
-    ret = clEnqueueWriteBuffer(command_queue, cur_mem_obj, CL_TRUE, 0, array_length * sizeof(double), current_temperatures, 0, NULL, NULL);
+    // TODO: may increase perf with more specific memeory type
+    cl_mem cur_mem_obj = clCreateBuffer(context, CL_MEM_READ_WRITE, array_length * sizeof(double), NULL, &ret);
+    cl_mem new_mem_obj = clCreateBuffer(context, CL_MEM_READ_WRITE, array_length * sizeof(double), NULL, &ret);
 
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
@@ -184,24 +173,34 @@ int main(int argc, char **argv)
     ret = clSetKernelArg(kernel, 3, sizeof(int), &width);
     ret = clSetKernelArg(kernel, 4, sizeof(int), &height);
 
+    // Copy the lists A and B to their respective memory buffers
+    // TODO: maybe write/copy new to curr every iteration except the first?
+    // DO ONCE
+    ret = clEnqueueWriteBuffer(command_queue, cur_mem_obj, CL_TRUE, 0, array_length * sizeof(double), current_temperatures, 0, NULL, NULL);
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = array_length; // Process the entire matrix/array
-    size_t local_item_size = 1;             // Process in groups of 64
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
+    size_t local_item_size = 64;             // Process in groups of 64
 
+    for (size_t i = 0; i < iterations; i++)
+    {
+        ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
+        ret = clEnqueueCopyBuffer(command_queue, new_mem_obj, cur_mem_obj, 0, 0, array_length * sizeof(double), 0, NULL, NULL);
+    }
+
+    // DO ONCE
     // Read the memory buffer C on the device to the local variable C
     ret = clEnqueueReadBuffer(command_queue, new_mem_obj, CL_TRUE, 0, array_length * sizeof(double), new_temperatures, 0, NULL, NULL);
 
     // Display the result to the screen
-    for (size_t i = 0; i < height; i++)
-    {
-        for (size_t j = 0; j < width; j++)
-        {
-            printf("%f\t", new_temperatures[i * width + j]);
-        }
-        printf("\n");
-    }
+    // for (size_t i = 0; i < height; i++)
+    // {
+    //     for (size_t j = 0; j < width; j++)
+    //     {
+    //         printf("%5e\t", new_temperatures[i * width + j]);
+    //     }
+    //     printf("\n");
+    // }
 
     // Clean up
     ret = clFlush(command_queue);
