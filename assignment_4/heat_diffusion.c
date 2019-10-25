@@ -14,7 +14,8 @@ int width;
 int height;
 int i;
 
-double **temperatures;
+double *current_temperatures;
+double *new_temperatures;
 
 int main(int argc, char **argv)
 {
@@ -76,46 +77,28 @@ int main(int argc, char **argv)
     // argument parsing done!
 
     // ########################################################################
-    // computation part below
-    // ########################################################################
-    // ########################################################################
-    // Read width, height and initial data from file 
+    // Read width, height and initial data from file
     // ########################################################################
     FILE *input_file;
 
-    input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
+    // input_file = fopen("test_input", "r");
+    // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
+    // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
 
     char char_line[40];
     char *char_token;
     const char deliminator[2] = " ";
 
-    // Read width and height 
+    // Read width and height
     fgets(char_line, 40, input_file);
     char_token = strtok(char_line, deliminator);
     width = atoi(char_token);
     char_token = strtok(NULL, deliminator);
     height = atoi(char_token);
-    
-    // TODO: determine if we need two matrices - one for current state vs. next state etc.
-    double *temperature_entries = malloc(sizeof(double) * width * height);
-    temperatures = malloc(sizeof(double *) * height);
-    for (size_t i = 0, j = 0; i < height; ++i, j += width)
-        temperatures[i] = temperature_entries + j;
 
-    for (size_t i = 0; i < width; ++i)
-        for (size_t j = 0; j < height; ++j)
-            temperatures[i][j] = 0.0;
-    // end of determine if we need two matrices - one for current state vs. next state etc.
-
-    // TODO: remove and replace with our own above
-    const int LIST_SIZE = 1024;
-    int *A = (int *)malloc(sizeof(int) * LIST_SIZE);
-    int *B = (int *)malloc(sizeof(int) * LIST_SIZE);
-    for (i = 0; i < LIST_SIZE; i++)
-    {
-        A[i] = i;
-        B[i] = LIST_SIZE - i;
-    }
+    int array_length = width * height;
+    double *current_temperatures = calloc(width * height, sizeof(double));
+    double *new_temperatures = calloc(width * height, sizeof(double));
 
     // Read initial values for temperature map
     int index_1;
@@ -123,21 +106,21 @@ int main(int argc, char **argv)
     double initial_value;
 
     while(fgets(char_line, 50, input_file)){
-
       fgets(char_line, 50, input_file);
       char_token = strtok(char_line, deliminator);
-      index_1 = atoi(char_token);
-      char_token = strtok(NULL, deliminator);
       index_2 = atoi(char_token);
       char_token = strtok(NULL, deliminator);
+      index_1 = atoi(char_token);
+      char_token = strtok(NULL, deliminator);
       initial_value = atof(char_token);
-      temperatures[index_1][index_2] = initial_value;
-      
+      current_temperatures[index_1 * width + index_2] = initial_value;
     }
 
-    // end of determine if we need two matrices - one for current state vs. next state etc.      
-    
-    // end of remove and replace with our own above
+    // ########################################################################
+    // computation part below
+    // ########################################################################
+
+    exit(1);
 
     FILE *fp;
     char *source_str;
@@ -172,11 +155,9 @@ int main(int argc, char **argv)
     cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 
     // Create memory buffers on the device for each vector
-    // TODO: use correct size for buffers here
-    cl_mem a_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY, LIST_SIZE * sizeof(int), NULL, &ret);
-    cl_mem b_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY, LIST_SIZE * sizeof(int), NULL, &ret);
-    cl_mem c_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY, LIST_SIZE * sizeof(int), NULL, &ret);
-    // end of use correct size for buffers here
+    // DONE!
+    cl_mem cur_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY, array_length * sizeof(double), NULL, &ret);
+    cl_mem new_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY, array_length * sizeof(double), NULL, &ret);
 
     // Copy the lists A and B to their respective memory buffers
     // TODO: use our own matrices here
