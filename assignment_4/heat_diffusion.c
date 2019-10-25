@@ -7,7 +7,7 @@
 
 // arguments
 int iterations = -1;
-float diff_const = -1;
+double diff_const = -1;
 
 int width;
 int height;
@@ -180,13 +180,14 @@ int main(int argc, char **argv)
     // Set the arguments of the kernel
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&cur_mem_obj);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&new_mem_obj);
-    ret = clSetKernelArg(kernel, 2, sizeof(float), &diff_const);
+    ret = clSetKernelArg(kernel, 2, sizeof(double), &diff_const);
     ret = clSetKernelArg(kernel, 3, sizeof(int), &width);
+    ret = clSetKernelArg(kernel, 4, sizeof(int), &height);
 
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = array_length; // Process the entire matrix/array
-    size_t local_item_size = 1;            // Process in groups of 64
+    size_t local_item_size = 1;             // Process in groups of 64
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 
     // Read the memory buffer C on the device to the local variable C
