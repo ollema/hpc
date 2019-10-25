@@ -181,6 +181,8 @@ int main(int argc, char **argv)
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&cur_mem_obj);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&new_mem_obj);
     ret = clSetKernelArg(kernel, 2, sizeof(float), &diff_const);
+    ret = clSetKernelArg(kernel, 3, sizeof(int), &width);
+
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = array_length; // Process the entire matrix/array
