@@ -4,5 +4,5 @@ __kernel void heat_diff(__global double *cur_temps, __global double *new_temps, 
     int i = get_global_id(0);
 
     // Do the operation
-    new_temps[i] = cur_temps[i];
+    new_temps[i] = cur_temps[i] + 1;
 }

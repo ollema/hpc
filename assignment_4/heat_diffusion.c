@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = array_length; // Process the entire matrix/array
-    size_t local_item_size = 64;            // Process in groups of 64
+    size_t local_item_size = 1;            // Process in groups of 64
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 
     // Read the memory buffer C on the device to the local variable C
