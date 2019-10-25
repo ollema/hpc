@@ -5,6 +5,7 @@
 #include <CL/cl.h>
 #include <string.h>
 #define MAX_SOURCE_SIZE (0x100000)
+#include <math.h>
 
 // arguments
 int iterations = -1;
@@ -85,7 +86,6 @@ int main(int argc, char **argv)
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
     input_file = fopen("diffusion", "r");
-
 
     char char_line[40];
     char *char_token;
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = array_length; // Process the entire matrix/array
-    size_t local_item_size = 64;             // Process in groups of 64
+    size_t local_item_size = 64;            // Process in groups of 64
 
     for (size_t i = 0; i < iterations; i++)
     {
@@ -192,14 +192,21 @@ int main(int argc, char **argv)
     ret = clEnqueueReadBuffer(command_queue, new_mem_obj, CL_TRUE, 0, array_length * sizeof(double), new_temperatures, 0, NULL, NULL);
 
     // Display the result to the screen
-    // for (size_t i = 0; i < height; i++)
-    // {
-    //     for (size_t j = 0; j < width; j++)
-    //     {
-    //         printf("%5e\t", new_temperatures[i * width + j]);
-    //     }
-    //     printf("\n");
-    // }
+    long double sum = 0.0;
+    for (size_t i = 0; i < array_length; i++)
+    {
+        sum += new_temperatures[i];
+    }
+    long double average = sum / array_length;
+    printf("%Lf\n", average);
+
+    long double diff = 0.0;
+    for (size_t i = 0; i < array_length; i++)
+    {
+        diff += fabs(average - new_temperatures[i]);
+    }
+    long double average_diff = diff / array_length;
+    printf("%Lf\n", average_diff);
 
     // Clean up
     ret = clFlush(command_queue);
