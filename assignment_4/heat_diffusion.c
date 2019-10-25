@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#define CL_TARGET_OPENCL_VERSION 120
 #include <CL/cl.h>
 #include <string.h>
 #define MAX_SOURCE_SIZE (0x100000)
@@ -80,13 +81,11 @@ int main(int argc, char **argv)
     // ########################################################################
     FILE *input_file;
 
-    sleep(10000);
-
     // input_file = fopen("test_input", "r");
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
     // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
-    // /home/hpcuser004/assignment_4/extracted/submit/diffusion
-    input_file = fopen("extracted/submit/diffusion", "r");
+    input_file = fopen("diffusion", "r");
+
 
     char char_line[40];
     char *char_token;
