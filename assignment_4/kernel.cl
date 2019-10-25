@@ -1,8 +1,8 @@
-__kernel void vector_add(__global int *A, __global int *B, __global int *C) {
+__kernel void heat_diff(__global double *cur_temps, __global double *new_temps, float diff_const) {
 
     // Get the index of the current element
     int i = get_global_id(0);
 
     // Do the operation
-    C[i] = A[i] + B[i];
+    new_temps[i] = cur_temps[i];
 }
