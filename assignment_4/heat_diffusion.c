@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <CL/cl.h>
-
+#include <string.h>
 #define MAX_SOURCE_SIZE (0x100000)
 
 // arguments
 int iterations = -1;
 float diff_const = -1;
+
+
 int width;
 int height;
 int i;
@@ -76,7 +78,24 @@ int main(int argc, char **argv)
     // ########################################################################
     // computation part below
     // ########################################################################
+    // ########################################################################
+    // Read width, height and initial data from file 
+    // ########################################################################
+    FILE *input_file;
 
+    input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
+
+    char char_line[40];
+    char *char_token;
+    const char deliminator[2] = " ";
+
+    // Read width and height 
+    fgets(char_line, 40, input_file);
+    char_token = strtok(char_line, deliminator);
+    width = atoi(char_token);
+    char_token = strtok(NULL, deliminator);
+    height = atoi(char_token);
+    
     // TODO: determine if we need two matrices - one for current state vs. next state etc.
     double *temperature_entries = malloc(sizeof(double) * width * height);
     temperatures = malloc(sizeof(double *) * height);
@@ -97,6 +116,27 @@ int main(int argc, char **argv)
         A[i] = i;
         B[i] = LIST_SIZE - i;
     }
+
+    // Read initial values for temperature map
+    int index_1;
+    int index_2;
+    double initial_value;
+
+    while(fgets(char_line, 50, input_file)){
+
+      fgets(char_line, 50, input_file);
+      char_token = strtok(char_line, deliminator);
+      index_1 = atoi(char_token);
+      char_token = strtok(NULL, deliminator);
+      index_2 = atoi(char_token);
+      char_token = strtok(NULL, deliminator);
+      initial_value = atof(char_token);
+      temperatures[index_1][index_2] = initial_value;
+      
+    }
+
+    // end of determine if we need two matrices - one for current state vs. next state etc.      
+    
     // end of remove and replace with our own above
 
     FILE *fp;
