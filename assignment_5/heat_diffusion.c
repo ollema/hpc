@@ -39,7 +39,8 @@ int main(int argc, char **argv)
 
         double *current_temperatures;
         double *new_temperatures;
-
+	double *input_data_temperatures;
+	
         int worker;
 
         extern char *optarg;
@@ -117,11 +118,16 @@ int main(int argc, char **argv)
         char_token = strtok(NULL, deliminator);
         height = atoi(char_token);
 
+	int number_of_rows_per_worker, start_row;
+        number_of_rows_per_worker = height / number_of_tasks;
+	
+	
         // int array_length = width * height;
         int full_array_length = width * height + 2 * width + 2 * height + 4;
         current_temperatures = calloc(full_array_length, sizeof(double));
         new_temperatures = calloc(full_array_length, sizeof(double));
-
+	input_data_temperatures = malloc((number_of_rows_per_worker + 2) * (width + 2) * sizeof(double));
+	
         // Read initial values for temperature map
         int index_1;
         int index_2;
@@ -142,8 +148,7 @@ int main(int argc, char **argv)
         // ########################################################################
         // computation part below
         // ########################################################################
-        int number_of_rows_per_worker, start_row;
-        number_of_rows_per_worker = height / number_of_tasks;
+	
         // TODO: handle rest
 
         for (worker = 1, start_row = number_of_rows_per_worker; worker < number_of_tasks; worker++, start_row += number_of_rows_per_worker)
@@ -160,6 +165,8 @@ int main(int argc, char **argv)
         {
             for (worker = 1; worker < number_of_tasks; worker++)
             {
+	        
+	        memcpy(input_data_temperatures, current_temperatures[], (number_of_rows_per_worker + 2) * (width + 2) * sizeof(double));
                 MPI_Send(current_temperatures, full_array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
             }
 
