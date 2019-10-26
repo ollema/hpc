@@ -22,12 +22,12 @@ heat_diffusion: heat_diffusion.c
 	$(CC) -o $@ $(CFLAGS) $(LIBS) $<
 
 submission: clean heat_diffusion
-	tar czf submit.tar.gz heat_diffusion.c Makefile kernel.cl
+	tar czf submit.tar.gz heat_diffusion.c Makefile
 
 test: submission
-	/home/hpc2019/a4_grading/check_submission.py submit.tar.gz
+	/home/hpc2019/a5_grading/check_submission.py submit.tar.gz
 
 
 # helpers
 clean:
-	rm -f $(OBJS) submit.tar.gz
+	@ rm -f $(OBJS) submit.tar.gz
