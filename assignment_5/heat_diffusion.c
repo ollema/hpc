@@ -15,12 +15,11 @@ int main(int argc, char **argv)
     // ########################################################################
     // init MPI
     // ########################################################################
-    int number_of_tasks, task_id, number_of_workers;
+    int number_of_tasks, task_id;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &number_of_tasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &task_id);
-    number_of_workers = number_of_tasks - 1;
 
     // ########################################################################
     // master
@@ -102,8 +101,8 @@ int main(int argc, char **argv)
         // ########################################################################
         FILE *input_file;
 
-        input_file = fopen("test_input", "r");
-        // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
+        // input_file = fopen("test_input", "r");
+        input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
         // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
         // input_file = fopen("diffusion", "r");
 
@@ -142,10 +141,19 @@ int main(int argc, char **argv)
         // ########################################################################
         // computation part below
         // ########################################################################
-        int block_size = array_length / number_of_workers;
+        int block_size;
+        if (number_of_tasks == 1)
+        {
+            block_size = array_length;
+        }
+        else
+        {
+            block_size = array_length / number_of_tasks;
+        }
+
         int offset;
 
-        for (worker = 1, offset = 0; worker <= number_of_workers; worker++, offset += block_size)
+        for (worker = 1, offset = block_size + array_length % number_of_tasks; worker < number_of_tasks; worker++, offset += block_size)
         {
             MPI_Send(&iterations, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
             MPI_Send(&diff_const, 1, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
@@ -157,12 +165,54 @@ int main(int argc, char **argv)
 
         for (int iter = 0; iter < iterations; iter++)
         {
-            for (worker = 1; worker <= number_of_workers; worker++)
+            for (worker = 1; worker < number_of_tasks; worker++)
             {
-                MPI_Send(&current_temperatures, array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
+                MPI_Send(current_temperatures, array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
+            }
+            double p1, p2, p3, p4;
+
+            for (int i = 0; i < block_size + array_length % number_of_tasks; i++)
+            {
+                if (i % width == 0)
+                {
+                    p1 = 0;
+                }
+                else
+                {
+                    p1 = current_temperatures[i - 1];
+                }
+
+                if ((i + 1) % width == 0)
+                {
+                    p2 = 0;
+                }
+                else
+                {
+                    p2 = current_temperatures[i + 1];
+                }
+
+                if (i < width)
+                {
+                    p3 = 0;
+                }
+                else
+                {
+                    p3 = current_temperatures[i - width];
+                }
+
+                if (i >= (width * height - width))
+                {
+                    p4 = 0;
+                }
+                else
+                {
+                    p4 = current_temperatures[i + width];
+                }
+
+                new_temperatures[i] = diff_const * ((p1 + p2 + p3 + p4) / 4 - current_temperatures[i]) + current_temperatures[i];
             }
 
-            for (worker = 1, offset = 0; worker <= number_of_workers; worker++, offset += block_size)
+            for (worker = 1, offset = block_size + array_length % number_of_tasks; worker < number_of_tasks; worker++, offset += block_size)
             {
                 MPI_Recv(&new_temperatures[offset], block_size, MPI_DOUBLE, worker, 2, MPI_COMM_WORLD, &status);
             }
@@ -194,6 +244,7 @@ int main(int argc, char **argv)
     {
         int iters, width, height, block_size, offset;
         double diff_const;
+        double *block, *temperatures;
         MPI_Recv(&iters, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&diff_const, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&width, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
@@ -201,18 +252,15 @@ int main(int argc, char **argv)
         MPI_Recv(&block_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&offset, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
 
-        double block[block_size];
-        double temperatures[width * height];
+        block = malloc(block_size * sizeof(double));
+        temperatures = malloc(width * height * sizeof(double));
 
-        double p1;
-        double p2;
-        double p3;
-        double p4;
+        double p1, p2, p3, p4;
 
         for (int iter = 0; iter < iters; iter++)
         {
-            MPI_Recv(&temperatures, width * height, MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
-            for (int j = 0, i =0; j < block_size; j++)
+            MPI_Recv(temperatures, width * height, MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
+            for (int j = 0, i = 0; j < block_size; j++)
             {
                 i = j + offset;
                 if (i % width == 0)
@@ -254,7 +302,7 @@ int main(int argc, char **argv)
                 block[j] = diff_const * ((p1 + p2 + p3 + p4) / 4 - temperatures[i]) + temperatures[i];
             }
 
-            MPI_Send(&block, block_size, MPI_DOUBLE, master, 2, MPI_COMM_WORLD);
+            MPI_Send(block, block_size, MPI_DOUBLE, master, 2, MPI_COMM_WORLD);
         }
     }
 
