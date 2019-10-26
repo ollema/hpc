@@ -39,8 +39,6 @@ int main(int argc, char **argv)
 
         double *current_temperatures;
         double *new_temperatures;
-	double *input_data_temperatures;
-	
         int worker;
 
         extern char *optarg;
@@ -118,16 +116,14 @@ int main(int argc, char **argv)
         char_token = strtok(NULL, deliminator);
         height = atoi(char_token);
 
-	int number_of_rows_per_worker, start_row;
+        int number_of_rows_per_worker, start_row;
         number_of_rows_per_worker = height / number_of_tasks;
-	
-	
+
         // int array_length = width * height;
         int full_array_length = width * height + 2 * width + 2 * height + 4;
         current_temperatures = calloc(full_array_length, sizeof(double));
         new_temperatures = calloc(full_array_length, sizeof(double));
-	input_data_temperatures = malloc((number_of_rows_per_worker + 2) * (width + 2) * sizeof(double));
-	
+
         // Read initial values for temperature map
         int index_1;
         int index_2;
@@ -148,7 +144,7 @@ int main(int argc, char **argv)
         // ########################################################################
         // computation part below
         // ########################################################################
-	
+
         // TODO: handle rest
 
         for (worker = 1, start_row = number_of_rows_per_worker; worker < number_of_tasks; worker++, start_row += number_of_rows_per_worker)
@@ -163,11 +159,10 @@ int main(int argc, char **argv)
 
         for (int iter = 0; iter < iterations; iter++)
         {
-            for (worker = 1; worker < number_of_tasks; worker++)
+            for (worker = 1, start_row = number_of_rows_per_worker; worker < number_of_tasks; worker++, start_row += number_of_rows_per_worker)
             {
-	        
-	        memcpy(input_data_temperatures, current_temperatures[], (number_of_rows_per_worker + 2) * (width + 2) * sizeof(double));
-                MPI_Send(current_temperatures, full_array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
+                int first_index = (start_row) * (width + 2);
+                MPI_Send(&current_temperatures[first_index], (number_of_rows_per_worker + 2) * (width + 2), MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
             }
 
             double p1, p2, p3, p4;
@@ -251,10 +246,10 @@ int main(int argc, char **argv)
 
         for (int iter = 0; iter < iters; iter++)
         {
-            MPI_Recv(temperatures, width * height + 2 * width + 2 * height + 4, MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(temperatures, (number_of_rows_per_worker + 2) * (width + 2), MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
             for (int row = start_row; row < start_row + number_of_rows_per_worker; row++)
             {
-                int first_index = (row + 1) * (width + 2) + 1;
+                int first_index = (width + 2) + 1;
                 int first_return_index = (row - start_row) * (width + 2) + 1;
 
                 for (int i = first_index, j = first_return_index; i < width + first_index; i++, j++)
