@@ -100,8 +100,8 @@ int main(int argc, char **argv)
         // ########################################################################
         FILE *input_file;
 
-        // input_file = fopen("test_input", "r");
-        input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
+        input_file = fopen("test_input", "r");
+        // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
         // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
         // input_file = fopen("diffusion", "r");
 
@@ -178,7 +178,10 @@ int main(int argc, char **argv)
             }
 
             MPI_Barrier(MPI_COMM_WORLD);
-            memcpy(current_temperatures, new_temperatures, full_array_length * sizeof(double));
+            double *temp;
+            temp = current_temperatures;
+            current_temperatures = new_temperatures;
+            new_temperatures = temp;
             MPI_Barrier(MPI_COMM_WORLD);
         }
 
@@ -186,7 +189,7 @@ int main(int argc, char **argv)
         // {
         //     for (size_t j = 1; j < (height + 1); j++)
         //     {
-        //         printf("%3e ", new_temperatures[i * (width + 2) + j]);
+        //         printf("%3e ", current_temperatures[i * (width + 2) + j]);
         //     }
         //     printf("\n");
         // }
@@ -198,7 +201,7 @@ int main(int argc, char **argv)
         {
             for (size_t j = 1; j < (height + 1); j++)
             {
-                sum += new_temperatures[i * (width + 2) + j];
+                sum += current_temperatures[i * (width + 2) + j];
             }
         }
         long double average = sum / (width * height);
@@ -209,7 +212,7 @@ int main(int argc, char **argv)
         {
             for (size_t j = 1; j < (height + 1); j++)
             {
-                diff += fabs(average - new_temperatures[i * (width + 2) + j]);
+                diff += fabs(average - current_temperatures[i * (width + 2) + j]);
             }
         }
         long double average_diff = diff / (width * height);
@@ -259,9 +262,15 @@ int main(int argc, char **argv)
                 }
             }
             MPI_Barrier(MPI_COMM_WORLD);
+            double *temp;
+            temp = current_temperatures;
+            current_temperatures = new_temperatures;
+            new_temperatures = temp;
             MPI_Barrier(MPI_COMM_WORLD);
         }
     }
 
+    MPI_Win_free(&win);
     MPI_Finalize();
+    return 0;
 }
