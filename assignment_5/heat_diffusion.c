@@ -117,9 +117,10 @@ int main(int argc, char **argv)
         char_token = strtok(NULL, deliminator);
         height = atoi(char_token);
 
-        int array_length = width * height;
-        current_temperatures = calloc(array_length, sizeof(double));
-        new_temperatures = calloc(array_length, sizeof(double));
+        // int array_length = width * height;
+        int full_array_length = width * height + 2 * width + 2 * height + 4;
+        current_temperatures = calloc(full_array_length, sizeof(double));
+        new_temperatures = calloc(full_array_length, sizeof(double));
 
         // Read initial values for temperature map
         int index_1;
@@ -135,105 +136,88 @@ int main(int argc, char **argv)
             index_1 = atoi(char_token);
             char_token = strtok(NULL, deliminator);
             initial_value = atof(char_token);
-            current_temperatures[index_1 * width + index_2] = initial_value;
+            current_temperatures[(index_1 + 1) * (width + 2) + index_2 + 1] = initial_value;
         }
 
         // ########################################################################
         // computation part below
         // ########################################################################
-        int block_size;
-        if (number_of_tasks == 1)
-        {
-            block_size = array_length;
-        }
-        else
-        {
-            block_size = array_length / number_of_tasks;
-        }
+        int number_of_rows_per_worker, start_row;
+        number_of_rows_per_worker = height / number_of_tasks;
+        // TODO: handle rest
 
-        int offset;
-
-        for (worker = 1, offset = block_size + array_length % number_of_tasks; worker < number_of_tasks; worker++, offset += block_size)
+        for (worker = 1, start_row = number_of_rows_per_worker; worker < number_of_tasks; worker++, start_row += number_of_rows_per_worker)
         {
             MPI_Send(&iterations, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
             MPI_Send(&diff_const, 1, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
             MPI_Send(&width, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
             MPI_Send(&height, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
-            MPI_Send(&block_size, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
-            MPI_Send(&offset, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
+            MPI_Send(&start_row, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
+            MPI_Send(&number_of_rows_per_worker, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
         }
 
         for (int iter = 0; iter < iterations; iter++)
         {
             for (worker = 1; worker < number_of_tasks; worker++)
             {
-                MPI_Send(current_temperatures, array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
+                MPI_Send(current_temperatures, full_array_length, MPI_DOUBLE, worker, 1, MPI_COMM_WORLD);
             }
+
             double p1, p2, p3, p4;
 
-            for (int i = 0; i < block_size + array_length % number_of_tasks; i++)
+            for (int row = 0; row < number_of_rows_per_worker; row++)
             {
-                if (i % width == 0)
-                {
-                    p1 = 0;
-                }
-                else
+                int first_index = (row + 1) * (width + 2) + 1;
+                for (int i = first_index; i < width + first_index; i++)
                 {
                     p1 = current_temperatures[i - 1];
-                }
-
-                if ((i + 1) % width == 0)
-                {
-                    p2 = 0;
-                }
-                else
-                {
                     p2 = current_temperatures[i + 1];
-                }
+                    p3 = current_temperatures[i - width - 2];
+                    p4 = current_temperatures[i + width + 2];
 
-                if (i < width)
-                {
-                    p3 = 0;
+                    new_temperatures[i] = diff_const * ((p1 + p2 + p3 + p4) / 4 - current_temperatures[i]) + current_temperatures[i];
                 }
-                else
-                {
-                    p3 = current_temperatures[i - width];
-                }
-
-                if (i >= (width * height - width))
-                {
-                    p4 = 0;
-                }
-                else
-                {
-                    p4 = current_temperatures[i + width];
-                }
-
-                new_temperatures[i] = diff_const * ((p1 + p2 + p3 + p4) / 4 - current_temperatures[i]) + current_temperatures[i];
             }
 
-            for (worker = 1, offset = block_size + array_length % number_of_tasks; worker < number_of_tasks; worker++, offset += block_size)
+            for (worker = 1, start_row = number_of_rows_per_worker; worker < number_of_tasks; worker++, start_row += number_of_rows_per_worker)
             {
-                MPI_Recv(&new_temperatures[offset], block_size, MPI_DOUBLE, worker, 2, MPI_COMM_WORLD, &status);
+                int offset = (start_row + 1) * (width + 2);
+                MPI_Recv(&new_temperatures[offset], number_of_rows_per_worker * (width + 2), MPI_DOUBLE, worker, 2, MPI_COMM_WORLD, &status);
             }
-            memcpy(current_temperatures, new_temperatures, array_length * sizeof(double));
+            memcpy(current_temperatures, new_temperatures, full_array_length * sizeof(double));
         }
+
+        // for (size_t i = 1; i < (width + 1); i++)
+        // {
+        //     for (size_t j = 1; j < (height + 1); j++)
+        //     {
+        //         printf("%3e ", current_temperatures[i * (width + 2) + j]);
+        //     }
+        //     printf("\n");
+        // }
+        // printf("\n");
 
         // Display the result to the screen
         long double sum = 0.0;
-        for (size_t i = 0; i < array_length; i++)
+        for (size_t i = 1; i < (width + 1); i++)
         {
-            sum += new_temperatures[i];
+            for (size_t j = 1; j < (height + 1); j++)
+            {
+                sum += new_temperatures[i * (width + 2) + j];
+            }
         }
-        long double average = sum / array_length;
+        long double average = sum / (width * height);
         printf("%Lf\n", average);
 
         long double diff = 0.0;
-        for (size_t i = 0; i < array_length; i++)
+        for (size_t i = 1; i < (width + 1); i++)
         {
-            diff += fabs(average - new_temperatures[i]);
+            for (size_t j = 1; j < (height + 1); j++)
+            {
+                diff += fabs(average - new_temperatures[i * (width + 2) + j]);
+            }
         }
-        long double average_diff = diff / array_length;
+        long double average_diff = diff / (width * height);
         printf("%Lf\n", average_diff);
     }
 
@@ -242,67 +226,41 @@ int main(int argc, char **argv)
     // ########################################################################
     if (task_id > 0)
     {
-        int iters, width, height, block_size, offset;
+        int iters, width, height, start_row, number_of_rows_per_worker;
         double diff_const;
         double *block, *temperatures;
+
         MPI_Recv(&iters, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&diff_const, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&width, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
         MPI_Recv(&height, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
-        MPI_Recv(&block_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
-        MPI_Recv(&offset, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+        MPI_Recv(&start_row, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+        MPI_Recv(&number_of_rows_per_worker, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
 
-        block = malloc(block_size * sizeof(double));
-        temperatures = malloc(width * height * sizeof(double));
+        block = calloc((width + 2) * number_of_rows_per_worker, sizeof(double));
+        temperatures = calloc(width * height + 2 * width + 2 * height + 4, sizeof(double));
 
         double p1, p2, p3, p4;
 
         for (int iter = 0; iter < iters; iter++)
         {
-            MPI_Recv(temperatures, width * height, MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
-            for (int j = 0, i = 0; j < block_size; j++)
+            MPI_Recv(temperatures, width * height + 2 * width + 2 * height + 4, MPI_DOUBLE, master, 1, MPI_COMM_WORLD, &status);
+            for (int row = start_row; row < start_row + number_of_rows_per_worker; row++)
             {
-                i = j + offset;
-                if (i % width == 0)
-                {
-                    p1 = 0;
-                }
-                else
+                int first_index = (row + 1) * (width + 2) + 1;
+                int first_return_index = (row - start_row) * (width + 2) + 1;
+
+                for (int i = first_index, j = first_return_index; i < width + first_index; i++, j++)
                 {
                     p1 = temperatures[i - 1];
-                }
-
-                if ((i + 1) % width == 0)
-                {
-                    p2 = 0;
-                }
-                else
-                {
                     p2 = temperatures[i + 1];
-                }
+                    p3 = temperatures[i - width - 2];
+                    p4 = temperatures[i + width + 2];
 
-                if (i < width)
-                {
-                    p3 = 0;
+                    block[j] = diff_const * ((p1 + p2 + p3 + p4) / 4 - temperatures[i]) + temperatures[i];
                 }
-                else
-                {
-                    p3 = temperatures[i - width];
-                }
-
-                if (i >= (width * height - width))
-                {
-                    p4 = 0;
-                }
-                else
-                {
-                    p4 = temperatures[i + width];
-                }
-
-                block[j] = diff_const * ((p1 + p2 + p3 + p4) / 4 - temperatures[i]) + temperatures[i];
             }
-
-            MPI_Send(block, block_size, MPI_DOUBLE, master, 2, MPI_COMM_WORLD);
+            MPI_Send(block, (width + 2) * number_of_rows_per_worker, MPI_DOUBLE, master, 2, MPI_COMM_WORLD);
         }
     }
 
