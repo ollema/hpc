@@ -1,0 +1,9 @@
+{
+    "files.exclude": {
+        "cell_distances_naive": true,
+        "cell_distances_ver1": true,
+        "cell_distances_ver2": true,
+        "cell_distances_ver3": true,
+        "cell_distances*.o": true
+    }
+}
