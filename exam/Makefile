@@ -31,10 +31,6 @@ cell_distances_ver1: cell_distances_ver1.c
 cell_distances_ver2: cell_distances_ver2.c
 	$(CC) -o $@ $(CFLAGS) -march=native $<
 
-# ver2
-cell_distances_ver3: cell_distances_ver3.c
-	$(CC) -o $@ $(CFLAGS) -march=native $<
-
 # helpers
 clean:
 	rm -f $(OBJS)
