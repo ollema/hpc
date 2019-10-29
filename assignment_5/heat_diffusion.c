@@ -100,10 +100,11 @@ int main(int argc, char **argv)
         // ########################################################################
         FILE *input_file;
 
-        input_file = fopen("test_input", "r");
+        // input_file = fopen("test_input", "r");
         // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100_100", "r");
         // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_10000_1000", "r");
-        // input_file = fopen("diffusion", "r");
+        // input_file = fopen("/home/hpc2019/a4_grading/test_data/diffusion_100000_100", "r");
+        input_file = fopen("diffusion", "r");
 
         char char_line[40];
         char *char_token;
@@ -112,9 +113,9 @@ int main(int argc, char **argv)
         // Read width and height
         fgets(char_line, 40, input_file);
         char_token = strtok(char_line, deliminator);
-        width = atoi(char_token);
-        char_token = strtok(NULL, deliminator);
         height = atoi(char_token);
+        char_token = strtok(NULL, deliminator);
+        width = atoi(char_token);
 
         int number_of_rows_per_worker, start_row;
         number_of_rows_per_worker = height / number_of_tasks;
